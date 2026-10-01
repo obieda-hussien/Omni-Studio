@@ -486,12 +486,11 @@ fun ProjectListScreen(
 
         // Template picker
         if (showTemplateSheet) {
-            val untitledProjectName = stringResource(R.string.project_untitled)
             ProjectTemplateSheet(
                 onTemplateSelected = { template, templateName ->
                     showTemplateSheet = false
                     viewModel.createProject(
-                        name = if (template.id == "blank") untitledProjectName else templateName,
+                        name = templateName,
                         aspectRatio = template.aspectRatio,
                         templateId = template.id,
                         trackTypes = template.tracks

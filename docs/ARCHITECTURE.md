@@ -143,3 +143,26 @@ An emulator and Android SDK are unavailable in the editing environment. Local
 Gradle compilation was blocked at distribution download by network access. Device
 screenshots, real scrolling behavior and frame timing require the device QA lane;
 this change does not claim measured FPS or completed visual verification.
+
+### Creating projects and delivering exports
+
+Project creation starts with a name and canvas ratio. An empty name falls back to
+Untitled; the chosen name and canvas flow into the existing project creation
+operation. Built-in and saved templates have separate destinations. The template
+library uses one adaptive lazy grid, with canvas-ratio filtering and schematic
+canvas previews. Saved template sharing, import and confirmed deletion remain
+available. Destination changes retain the draft project name and canvas.
+
+Export keeps its header and one primary action outside the scrolling body in
+both phone sheets and embedded desktop panes. Setup contains presets and explicit
+resolution, frame-rate, codec, quality and audio choices. Options contains range,
+alternate output types, watermark, encoder/privacy controls, target size, naming
+and timeline exchange. Review contains output capability/provenance reports and
+recent exports. The range validity gate and all export state actions remain in
+force. A manual specification clears the selected platform preset so its label
+does not contradict the output. Preset controls wrap on narrow screens.
+
+JVM UI regression covers creating a named portrait project after browsing both
+libraries and checks that every export destination has exactly one visible export
+action and a visible close action. Device gesture and frame-time validation still
+require the device QA lane.

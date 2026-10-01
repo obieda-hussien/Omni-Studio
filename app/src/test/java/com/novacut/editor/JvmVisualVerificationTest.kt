@@ -8,6 +8,8 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.tryPerformAccessibilityChecks
 import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckResult
@@ -27,6 +29,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
+import com.novacut.editor.model.AspectRatio
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -169,6 +173,37 @@ class JvmVisualVerificationTest {
         capture("tutorial-high-contrast-dark.png")
         updateAppearance(AppearanceMode.DARK)
         capture("tutorial-dark.png")
+    }
+
+    @Test
+    fun projectBasicsSurviveLibraryBrowsingAndExportKeepsOneVisibleAction() {
+        compose.onNodeWithTag(ClearCutTestTags.PROJECTS_CREATE_PROJECT).performClick()
+        waitUntilAtLeastOneExists(ClearCutTestTags.TEMPLATE_SHEET)
+        compose.onNodeWithTag("new_project_name").performTextInput("Portrait workspace")
+        compose.onNodeWithTag("project_canvas_RATIO_9_16").performScrollTo().performClick()
+        compose.onNodeWithTag("project_builtin").performClick()
+        compose.onNodeWithTag("template_filter_RATIO_9_16").performClick()
+        compose.onNodeWithTag(ClearCutTestTags.TEMPLATE_BLANK).assertDoesNotExist()
+        compose.onNodeWithTag("template_builtin_short_tiktok").assertExists()
+        compose.onNodeWithTag("project_saved").performClick()
+        compose.onNodeWithTag("template_builtin_short_tiktok").assertDoesNotExist()
+        compose.onNodeWithTag("project_start").performClick()
+        compose.onNodeWithTag(ClearCutTestTags.TEMPLATE_BLANK).performScrollTo().performClick()
+        waitUntilAtLeastOneExists(ClearCutTestTags.EDITOR_SCREEN)
+        dismissTutorialIfPresent()
+        val project = runBlocking {
+            compose.activity.projectDao.getAllProjectsSnapshot().first { it.name == "Portrait workspace" }
+        }
+        assertEquals(AspectRatio.RATIO_9_16, project.aspectRatio)
+        compose.onNodeWithTag(ClearCutTestTags.EDITOR_EXPORT).performClick()
+        waitUntilAtLeastOneExists(ClearCutTestTags.EXPORT_SHEET)
+        listOf("export_setup", "export_options", "export_review").forEach { destination ->
+            compose.onNodeWithTag(destination).performClick()
+            compose.waitForIdle()
+            assertEquals(1, compose.onAllNodesWithTag(ClearCutTestTags.EXPORT_PRIMARY_ACTION).fetchSemanticsNodes().size)
+            compose.onNodeWithTag(ClearCutTestTags.EXPORT_PRIMARY_ACTION).assertIsDisplayed()
+            compose.onNodeWithTag(ClearCutTestTags.EXPORT_CLOSE).assertIsDisplayed()
+        }
     }
 
     private fun capture(name: String) {

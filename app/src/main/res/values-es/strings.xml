@@ -3367,4 +3367,18 @@
     <string name="settings_category_export">Exportación</string>
     <string name="settings_category_storage">Almacenamiento</string>
     <string name="settings_category_app">Aplicación</string>
+
+    <!-- Project creation, template library and export destinations. -->
+    <string name="template_workspace_subtitle">Empieza de cero o elige un diseño preparado.</string>
+    <string name="template_start_tab">Crear</string>
+    <string name="template_builtin_tab">Incluidas</string>
+    <string name="template_saved_tab">Guardadas</string>
+    <string name="template_project_name">Nombre del proyecto</string>
+    <string name="template_canvas">Lienzo</string>
+    <string name="template_create_project">Crear proyecto</string>
+    <string name="template_filter_all">Todos los diseños</string>
+    <string name="template_actions_format">Opciones de %1$s</string>
+    <string name="export_setup_tab">Formato</string>
+    <string name="export_options_tab">Opciones</string>
+    <string name="export_review_tab">Revisión</string>
 </resources>

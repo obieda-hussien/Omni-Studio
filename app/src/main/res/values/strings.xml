@@ -3642,4 +3642,18 @@
     <string name="settings_category_export">Export</string>
     <string name="settings_category_storage">Storage</string>
     <string name="settings_category_app">App</string>
+
+    <!-- Project creation, template library and export destinations. -->
+    <string name="template_workspace_subtitle">Start fresh or choose a ready-made layout.</string>
+    <string name="template_start_tab">Start</string>
+    <string name="template_builtin_tab">Built-in</string>
+    <string name="template_saved_tab">Saved</string>
+    <string name="template_project_name">Project name</string>
+    <string name="template_canvas">Canvas</string>
+    <string name="template_create_project">Create project</string>
+    <string name="template_filter_all">All layouts</string>
+    <string name="template_actions_format">Options for %1$s</string>
+    <string name="export_setup_tab">Setup</string>
+    <string name="export_options_tab">Options</string>
+    <string name="export_review_tab">Review</string>
 </resources>

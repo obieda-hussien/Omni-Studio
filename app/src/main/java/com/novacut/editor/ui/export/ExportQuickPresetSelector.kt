@@ -1,6 +1,8 @@
 package com.novacut.editor.ui.export
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -49,6 +51,7 @@ private val featuredPresets = listOf(
 
 private val overflowPresets = PlatformPreset.entries.filterNot(featuredPresets::contains)
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ExportQuickPresetSelector(
     config: ExportConfig,
@@ -60,14 +63,14 @@ internal fun ExportQuickPresetSelector(
     val overflowSelection = config.platformPreset?.takeIf(overflowPresets::contains)
     var showOverflowPresets by remember { mutableStateOf(false) }
 
-    Row(
+    FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         featuredPresets.forEach { preset ->
             FilterChip(
                 modifier = Modifier
-                    .weight(1f)
                     .heightIn(min = TouchTarget.minimum),
                 onClick = { onConfigChanged(config.withPlatformPreset(preset)) },
                 label = {
@@ -75,23 +78,21 @@ internal fun ExportQuickPresetSelector(
                         text = preset.displayName,
                         style = MaterialTheme.typography.labelMedium,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
                     )
                 },
                 selected = config.platformPreset == preset,
                 colors = FilterChipDefaults.filterChipColors(
                     containerColor = semanticColors.panelRaised,
                     labelColor = semanticColors.subtext,
-                    selectedContainerColor = ClearCutAccents.Green.copy(alpha = 0.16f),
-                    selectedLabelColor = ClearCutAccents.Green,
+                    selectedContainerColor = semanticColors.selectedSurface,
+                    selectedLabelColor = semanticColors.accent,
                 ),
             )
         }
 
-        Box(modifier = Modifier.weight(1f)) {
+        Box {
             FilterChip(
                 modifier = Modifier
-                    .fillMaxWidth()
                     .heightIn(min = TouchTarget.minimum),
                 onClick = { showOverflowPresets = true },
                 label = {
@@ -115,9 +116,9 @@ internal fun ExportQuickPresetSelector(
                     containerColor = semanticColors.panelRaised,
                     labelColor = semanticColors.subtext,
                     iconColor = semanticColors.subtext,
-                    selectedContainerColor = ClearCutAccents.Green.copy(alpha = 0.16f),
-                    selectedLabelColor = ClearCutAccents.Green,
-                    selectedTrailingIconColor = ClearCutAccents.Green,
+                    selectedContainerColor = semanticColors.selectedSurface,
+                    selectedLabelColor = semanticColors.accent,
+                    selectedTrailingIconColor = semanticColors.accent,
                 ),
             )
             DropdownMenu(
@@ -135,7 +136,7 @@ internal fun ExportQuickPresetSelector(
                                 Icon(
                                     imageVector = Icons.Default.CheckCircle,
                                     contentDescription = null,
-                                    tint = ClearCutAccents.Green,
+                                    tint = semanticColors.accent,
                                     modifier = Modifier.size(18.dp),
                                 )
                             }

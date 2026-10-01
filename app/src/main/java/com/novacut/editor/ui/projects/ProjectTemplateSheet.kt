@@ -1,5 +1,6 @@
 package com.novacut.editor.ui.projects
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -7,6 +8,11 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.novacut.editor.ui.theme.ClearCutPrimaryButton
+import com.novacut.editor.ui.theme.WorkspaceDestinationRail
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,9 +21,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -33,8 +40,6 @@ import com.novacut.editor.ui.theme.ClearCutAccents
 import com.novacut.editor.ui.theme.LocalClearCutColors
 import com.novacut.editor.ui.theme.ClearCutChromeIconButton
 import com.novacut.editor.ui.theme.ClearCutDialogIcon
-import com.novacut.editor.ui.theme.ClearCutMetricPill
-import com.novacut.editor.ui.theme.ClearCutSectionHeader
 import com.novacut.editor.ui.theme.ClearCutSecondaryButton
 import com.novacut.editor.ui.theme.Radius
 import com.novacut.editor.ui.theme.Spacing
@@ -128,463 +133,252 @@ fun ProjectTemplateSheet(
     onImportTemplate: () -> Unit = {},
     userTemplates: List<UserTemplate> = emptyList(),
 ) {
+    val colors = LocalClearCutColors.current
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    BackHandler(onBack = onDismiss)
+    var destination by rememberSaveable { mutableStateOf("project_start") }
+    var projectName by rememberSaveable { mutableStateOf("") }
+    var canvas by rememberSaveable { mutableStateOf(AspectRatio.RATIO_16_9) }
+    var aspectFilter by rememberSaveable { mutableStateOf<AspectRatio?>(null) }
     var pendingDeleteTemplate by remember { mutableStateOf<UserTemplate?>(null) }
+    val untitledName = stringResource(R.string.project_untitled)
+    val blankTemplate = projectTemplates.first { it.id == "blank" }
+    val filteredTemplates = remember(aspectFilter) {
+        projectTemplates.filter { aspectFilter == null || it.aspectRatio == aspectFilter }
+    }
+    val gridState = rememberLazyGridState()
+    LaunchedEffect(destination, aspectFilter) {
+        focusManager.clearFocus()
+        keyboard?.hide()
+        gridState.scrollToItem(0)
+    }
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .fillMaxHeight(0.92f)
+        modifier = modifier.fillMaxWidth().fillMaxHeight(0.92f)
             .testTag(ClearCutTestTags.TEMPLATE_SHEET)
-            .navigationBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .background(LocalClearCutColors.current.panel, RoundedCornerShape(topStart = Radius.xxl, topEnd = Radius.xxl))
-            .padding(horizontal = Spacing.lg, vertical = 14.dp)
+            .background(colors.panel, RoundedCornerShape(topStart = Radius.xxl, topEnd = Radius.xxl))
+            .navigationBarsPadding().imePadding().padding(horizontal = Spacing.lg, vertical = 14.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .width(36.dp)
-                .height(3.dp)
-                .clip(RoundedCornerShape(Radius.sm))
-                .background(LocalClearCutColors.current.surfaceHigh.copy(alpha = 0.55f))
-        )
-
-        Spacer(Modifier.height(14.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    stringResource(R.string.template_new_project),
-                    color = LocalClearCutColors.current.text,
-                    style = MaterialTheme.typography.titleLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    stringResource(R.string.template_headline),
-                    color = ClearCutAccents.Rosewater,
-                    style = MaterialTheme.typography.headlineMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.template_new_project), color = colors.text,
+                    style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(R.string.template_workspace_subtitle), color = colors.subtext,
+                    style = MaterialTheme.typography.bodySmall)
             }
             ClearCutChromeIconButton(
-                icon = Icons.Default.Close,
-                contentDescription = stringResource(R.string.close),
-                onClick = onDismiss
+                icon = Icons.Default.Close, contentDescription = stringResource(R.string.close),
+                onClick = onDismiss, containerColor = Color.Transparent, borderColor = Color.Transparent,
             )
         }
-
-        Spacer(Modifier.height(6.dp))
-        Text(
-            stringResource(R.string.template_subtitle),
-            color = LocalClearCutColors.current.subtext,
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 3,
-            overflow = TextOverflow.Ellipsis
-        )
-
         Spacer(Modifier.height(12.dp))
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            ClearCutMetricPill(
-                text = stringResource(R.string.projects_templates_count, projectTemplates.size),
-                accent = ClearCutAccents.Mauve,
-                icon = Icons.Default.DashboardCustomize
-            )
-            if (userTemplates.isNotEmpty()) {
-                ClearCutMetricPill(
-                    text = stringResource(R.string.template_saved_count, userTemplates.size),
-                    accent = ClearCutAccents.Sapphire,
-                    icon = Icons.Default.BookmarkAdded
-                )
-            }
-        }
-
-        Spacer(Modifier.height(14.dp))
-
-        Surface(
-            onClick = onImportTemplate,
-            modifier = Modifier.fillMaxWidth(),
-            color = LocalClearCutColors.current.panelHighest,
-            shape = RoundedCornerShape(Radius.xl),
-            border = androidx.compose.foundation.BorderStroke(1.dp, LocalClearCutColors.current.cardStrokeStrong)
-        ) {
-            Row(
-                modifier = Modifier
-                    .defaultMinSize(minHeight = 76.dp)
-                    .padding(horizontal = Spacing.lg, vertical = Spacing.lg),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(RoundedCornerShape(Radius.md))
-                        .background(ClearCutAccents.Sapphire.copy(alpha = 0.14f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Default.FileOpen,
-                        contentDescription = null,
-                        tint = ClearCutAccents.Sapphire,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                Spacer(Modifier.width(12.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        stringResource(R.string.template_import),
-                        color = LocalClearCutColors.current.text,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        stringResource(R.string.template_import_description),
-                        color = LocalClearCutColors.current.subtext,
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        TemplateSectionHeader(
-            title = stringResource(R.string.template_built_in_section),
-            description = stringResource(R.string.template_built_in_description)
+        WorkspaceDestinationRail(
+            destinations = listOf(
+                "project_start" to stringResource(R.string.template_start_tab),
+                "project_builtin" to stringResource(R.string.template_builtin_tab),
+                "project_saved" to stringResource(R.string.template_saved_tab),
+            ), selectedKey = destination, onSelected = { destination = it },
         )
-
+        Spacer(Modifier.height(12.dp))
+        // One scroll owner for the whole destination; no grids nested inside a scroll column.
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 168.dp),
-            modifier = Modifier
-                .testTag(ClearCutTestTags.TEMPLATE_GRID)
-                .fillMaxWidth()
-                .heightIn(max = if (userTemplates.isEmpty()) 460.dp else 320.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            columns = GridCells.Adaptive(150.dp), state = gridState,
+            modifier = Modifier.weight(1f).fillMaxWidth().testTag(ClearCutTestTags.TEMPLATE_GRID),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(bottom = 16.dp),
         ) {
-            items(projectTemplates, key = { it.id }) { template ->
-                ProjectTemplateCard(
-                    template = template,
-                    onClick = { templateName -> onTemplateSelected(template, templateName) }
-                )
-            }
-        }
-
-        // User templates section
-        if (userTemplates.isNotEmpty()) {
-            Spacer(Modifier.height(14.dp))
-            TemplateSectionHeader(
-                title = stringResource(R.string.template_my_templates),
-                description = stringResource(R.string.template_my_templates_description)
-            )
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 168.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 240.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(userTemplates, key = { it.id }) { ut ->
-                    UserTemplateCard(
-                        template = ut,
-                        onClick = { onUserTemplateSelected(ut) },
-                        onDelete = { pendingDeleteTemplate = ut },
-                        onShare = { onShareTemplate(ut.id) }
-                    )
+            when (destination) {
+                "project_start" -> {
+                    item(key = "project_basics", span = { GridItemSpan(maxLineSpan) }) {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            OutlinedTextField(
+                                value = projectName, onValueChange = { projectName = it }, singleLine = true,
+                                label = { Text(stringResource(R.string.template_project_name)) },
+                                placeholder = { Text(untitledName) },
+                                shape = RoundedCornerShape(Radius.md),
+                                modifier = Modifier.fillMaxWidth().testTag("new_project_name"),
+                            )
+                            Text(stringResource(R.string.template_canvas), style = MaterialTheme.typography.titleSmall,
+                                color = colors.text)
+                            TemplateCanvasPreview(canvas, Icons.Default.Movie, colors.accent)
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                AspectRatio.entries.forEach { ratio ->
+                                    FilterChip(
+                                        selected = canvas == ratio, onClick = { canvas = ratio },
+                                        label = { Text(ratio.label) },
+                                        modifier = Modifier.heightIn(min = 48.dp).testTag("project_canvas_${ratio.name}"),
+                                    )
+                                }
+                            }
+                            ClearCutPrimaryButton(
+                                text = stringResource(R.string.template_create_project), icon = Icons.Default.Add,
+                                onClick = {
+                                    focusManager.clearFocus()
+                                    keyboard?.hide()
+                                    onTemplateSelected(blankTemplate.copy(aspectRatio = canvas),
+                                        projectName.trim().ifBlank { untitledName })
+                                }, modifier = Modifier.fillMaxWidth().testTag(ClearCutTestTags.TEMPLATE_BLANK),
+                            )
+                        }
+                    }
+                    item(key = "start_library", span = { GridItemSpan(maxLineSpan) }) {
+                        TemplateLibraryEntry(
+                            title = stringResource(R.string.template_built_in_section),
+                            detail = stringResource(R.string.projects_templates_count, projectTemplates.size),
+                            icon = Icons.Default.DashboardCustomize,
+                            onClick = { destination = "project_builtin" },
+                        )
+                    }
+                    item(key = "start_import", span = { GridItemSpan(maxLineSpan) }) {
+                        ClearCutSecondaryButton(
+                            text = stringResource(R.string.template_import), icon = Icons.Default.FileOpen,
+                            onClick = onImportTemplate, modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+                "project_builtin" -> {
+                    item(key = "built_in_filters", span = { GridItemSpan(maxLineSpan) }) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(stringResource(R.string.template_built_in_description), color = colors.subtext,
+                                style = MaterialTheme.typography.bodySmall)
+                            Row(Modifier.horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                FilterChip(selected = aspectFilter == null, onClick = { aspectFilter = null },
+                                    label = { Text(stringResource(R.string.template_filter_all)) })
+                                projectTemplates.map { it.aspectRatio }.distinct().forEach { ratio ->
+                                    FilterChip(selected = aspectFilter == ratio, onClick = { aspectFilter = ratio },
+                                        label = { Text(ratio.label) },
+                                        modifier = Modifier.testTag("template_filter_${ratio.name}"))
+                                }
+                            }
+                        }
+                    }
+                    items(filteredTemplates, key = { "builtin_${it.id}" }) { template ->
+                        ProjectTemplateCard(template) { name ->
+                            onTemplateSelected(template, if (template.id == "blank") untitledName else name)
+                        }
+                    }
+                }
+                "project_saved" -> {
+                    item(key = "saved_import", span = { GridItemSpan(maxLineSpan) }) {
+                        ClearCutSecondaryButton(text = stringResource(R.string.template_import),
+                            icon = Icons.Default.FileOpen, onClick = onImportTemplate, modifier = Modifier.fillMaxWidth())
+                    }
+                    if (userTemplates.isEmpty()) {
+                        item(key = "saved_empty", span = { GridItemSpan(maxLineSpan) }) {
+                            Column(Modifier.padding(vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(stringResource(R.string.template_saved_empty_title), color = colors.text,
+                                    style = MaterialTheme.typography.titleMedium)
+                                Text(stringResource(R.string.template_saved_empty_body), color = colors.subtext,
+                                    style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    } else {
+                        items(userTemplates, key = { "saved_${it.id}" }) { template ->
+                            UserTemplateCard(template, onClick = { onUserTemplateSelected(template) },
+                                onDelete = { pendingDeleteTemplate = template }, onShare = { onShareTemplate(template.id) })
+                        }
+                    }
                 }
             }
-        } else {
-            Spacer(Modifier.height(14.dp))
-            TemplateSectionHeader(
-                title = stringResource(R.string.template_my_templates),
-                description = stringResource(R.string.template_my_templates_description)
-            )
-            EmptyTemplateStateCard()
         }
     }
-
     pendingDeleteTemplate?.let { template ->
-        DeleteUserTemplateDialog(
-            templateName = template.name,
-            onDismissRequest = { pendingDeleteTemplate = null },
-            onConfirm = {
-                pendingDeleteTemplate = null
-                onDeleteUserTemplate(template.id)
-            }
-        )
+        DeleteUserTemplateDialog(template.name, onDismissRequest = { pendingDeleteTemplate = null },
+            onConfirm = { pendingDeleteTemplate = null; onDeleteUserTemplate(template.id) })
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun UserTemplateCard(
-    template: UserTemplate,
-    onClick: () -> Unit,
-    onDelete: () -> Unit,
-    onShare: () -> Unit = {}
-) {
-    val templateDescription = stringResource(
-        R.string.template_user_card_cd,
-        template.name,
-        template.aspectRatio.label
-    )
-
-    Column(
-        modifier = Modifier
-            .height(176.dp)
-            .clip(RoundedCornerShape(Radius.xl))
-            .background(LocalClearCutColors.current.panelHighest)
-            .border(1.dp, LocalClearCutColors.current.cardStrokeStrong, RoundedCornerShape(Radius.xl))
-            .clickable(role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = templateDescription }
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(74.dp)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(ClearCutAccents.Mauve.copy(alpha = 0.24f), Color.Transparent)
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Default.Bookmark,
-                null,
-                tint = ClearCutAccents.Mauve,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    template.name,
-                    color = LocalClearCutColors.current.text,
-                    style = MaterialTheme.typography.titleSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    TemplateActionButton(
-                        icon = Icons.Default.Share,
-                        contentDescription = stringResource(R.string.template_share_cd_format, template.name),
-                        tint = ClearCutAccents.Blue,
-                        onClick = onShare
-                    )
-                    TemplateActionButton(
-                        icon = Icons.Default.Delete,
-                        contentDescription = stringResource(R.string.template_delete_cd_format, template.name),
-                        tint = ClearCutAccents.Red,
-                        onClick = onDelete
-                    )
-                }
+private fun TemplateLibraryEntry(title: String, detail: String, icon: ImageVector, onClick: () -> Unit) {
+    val colors = LocalClearCutColors.current
+    Surface(onClick = onClick, color = colors.panelHighest, shape = RoundedCornerShape(Radius.lg)) {
+        Row(Modifier.fillMaxWidth().heightIn(min = 72.dp).padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(icon, contentDescription = null, tint = colors.accent)
+            Column(Modifier.weight(1f)) {
+                Text(title, color = colors.text, style = MaterialTheme.typography.titleSmall)
+                Text(detail, color = colors.subtext, style = MaterialTheme.typography.bodySmall)
             }
-            Text(
-                if (template.textOverlayCount > 0) stringResource(R.string.template_tracks_texts_format, template.trackTypes.size, template.textOverlayCount)
-                else stringResource(R.string.template_tracks_format, template.trackTypes.size),
-                color = LocalClearCutColors.current.subtext,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 1
-            )
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                TemplateBadge(text = template.aspectRatio.label, accent = ClearCutAccents.Mauve)
-                if (template.compatibility.slotCount > 0) {
-                    TemplateBadge(
-                        text = stringResource(R.string.template_slots_format, template.compatibility.slotCount),
-                        accent = ClearCutAccents.Sapphire
-                    )
-                }
-            }
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = colors.subtext)
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+/** A schematic of the template's canvas, rather than a fake media thumbnail. */
 @Composable
-private fun ProjectTemplateCard(
-    template: ProjectTemplateUI,
-    onClick: (String) -> Unit
-) {
-    val templateName = stringResource(template.nameResId)
-    val category = formatCategory(template.category)
-    val templateDescription = stringResource(
-        R.string.template_builtin_card_cd,
-        templateName,
-        category,
-        template.aspectRatio.label
-    )
-
-    Column(
-        modifier = Modifier
-            .height(184.dp)
-            .clip(RoundedCornerShape(Radius.xl))
-            .background(LocalClearCutColors.current.panelHighest)
-            .border(1.dp, LocalClearCutColors.current.cardStrokeStrong, RoundedCornerShape(Radius.xl))
-            .then(
-                if (template.id == "blank") Modifier.testTag(ClearCutTestTags.TEMPLATE_BLANK) else Modifier
-            )
-            .clickable(role = Role.Button, onClick = { onClick(templateName) })
-            .semantics { contentDescription = templateDescription }
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(86.dp)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(template.accentColor.copy(alpha = 0.3f), Color.Transparent)
-                    )
-                ),
-            contentAlignment = Alignment.TopStart
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(Radius.md))
-                        .background(LocalClearCutColors.current.canvas.copy(alpha = 0.12f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        template.icon,
-                        null,
-                        tint = template.accentColor,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-                Text(
-                    template.aspectRatio.label,
-                    color = template.accentColor,
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier
-                        .background(LocalClearCutColors.current.canvas.copy(alpha = 0.16f), RoundedCornerShape(10.dp))
-                        .padding(horizontal = 8.dp, vertical = 5.dp)
-                )
-            }
-        }
-
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text(
-                    templateName,
-                    color = LocalClearCutColors.current.text,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    stringResource(template.descriptionResId),
-                    color = LocalClearCutColors.current.subtext,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                TemplateBadge(text = category, accent = template.accentColor)
-                TemplateBadge(text = stringResource(template.suggestedDurationResId), accent = LocalClearCutColors.current.subtext)
-                TemplateBadge(text = stringResource(R.string.template_tracks_format, template.tracks.size), accent = LocalClearCutColors.current.subtext)
-            }
+private fun TemplateCanvasPreview(ratio: AspectRatio, icon: ImageVector, accent: Color) {
+    val colors = LocalClearCutColors.current
+    val aspect = ratio.widthRatio.toFloat() / ratio.heightRatio
+    val frameWidth = minOf(120f, 72f * aspect)
+    Box(Modifier.fillMaxWidth().height(100.dp).background(colors.background, RoundedCornerShape(Radius.md)),
+        contentAlignment = Alignment.Center) {
+        Box(Modifier.size(frameWidth.dp, (frameWidth / aspect).dp)
+            .background(accent.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
+            .border(1.dp, accent.copy(alpha = 0.45f), RoundedCornerShape(6.dp)), contentAlignment = Alignment.Center) {
+            Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(24.dp))
         }
     }
 }
 
 @Composable
-private fun TemplateBadge(
-    text: String,
-    accent: Color
-) {
+private fun ProjectTemplateCard(template: ProjectTemplateUI, onClick: (String) -> Unit) {
+    val colors = LocalClearCutColors.current
+    val name = stringResource(template.nameResId)
+    val description = stringResource(R.string.template_builtin_card_cd, name, formatCategory(template.category), template.aspectRatio.label)
     Surface(
-        color = accent.copy(alpha = 0.10f),
-        shape = RoundedCornerShape(Radius.sm),
-        border = androidx.compose.foundation.BorderStroke(1.dp, accent.copy(alpha = 0.18f))
+        onClick = { onClick(name) }, color = colors.panelHighest, shape = RoundedCornerShape(Radius.lg),
+        border = BorderStroke(1.dp, colors.cardStroke),
+        modifier = Modifier.fillMaxWidth().testTag(if (template.id == "blank") ClearCutTestTags.TEMPLATE_BLANK else "template_builtin_${template.id}")
+            .semantics { contentDescription = description },
     ) {
-        Text(
-            text = text,
-            color = accent,
-            style = MaterialTheme.typography.labelSmall,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-        )
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            TemplateCanvasPreview(template.aspectRatio, template.icon, colors.accent)
+            Text(name, color = colors.text, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(stringResource(template.descriptionResId), color = colors.subtext,
+                style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            Text(template.aspectRatio.label + " · " + stringResource(R.string.template_tracks_format, template.tracks.size),
+                color = colors.accent, style = MaterialTheme.typography.labelSmall)
+            Text(stringResource(template.suggestedDurationResId), color = colors.subtext, style = MaterialTheme.typography.labelSmall)
+        }
     }
 }
 
 @Composable
-private fun TemplateSectionHeader(
-    title: String,
-    description: String
-) {
-    ClearCutSectionHeader(
-        title = title,
-        description = description
-    )
-    Spacer(Modifier.height(8.dp))
-}
-
-@Composable
-private fun EmptyTemplateStateCard() {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = LocalClearCutColors.current.panelHighest,
-        shape = RoundedCornerShape(Radius.xl),
-        border = androidx.compose.foundation.BorderStroke(1.dp, LocalClearCutColors.current.cardStrokeStrong)
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.template_saved_empty_title),
-                color = LocalClearCutColors.current.text,
-                style = MaterialTheme.typography.titleSmall
-            )
-            Text(
-                text = stringResource(R.string.template_saved_empty_body),
-                color = LocalClearCutColors.current.subtext,
-                style = MaterialTheme.typography.bodySmall
-            )
+private fun UserTemplateCard(template: UserTemplate, onClick: () -> Unit, onDelete: () -> Unit, onShare: () -> Unit) {
+    val colors = LocalClearCutColors.current
+    var showActions by remember { mutableStateOf(false) }
+    Surface(onClick = onClick, color = colors.panelHighest, shape = RoundedCornerShape(Radius.lg),
+        border = BorderStroke(1.dp, colors.cardStroke), modifier = Modifier.fillMaxWidth()
+            .semantics { contentDescription = template.name + ", " + template.aspectRatio.label }) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            TemplateCanvasPreview(template.aspectRatio, Icons.Default.Bookmark, colors.accent)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(template.name, modifier = Modifier.weight(1f), color = colors.text,
+                    style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Box {
+                    ClearCutChromeIconButton(icon = Icons.Default.MoreVert,
+                        contentDescription = stringResource(R.string.template_actions_format, template.name),
+                        onClick = { showActions = true }, containerColor = Color.Transparent, borderColor = Color.Transparent)
+                    DropdownMenu(expanded = showActions, onDismissRequest = { showActions = false }) {
+                        DropdownMenuItem(text = { Text(stringResource(R.string.share)) },
+                            onClick = { showActions = false; onShare() },
+                            leadingIcon = { Icon(Icons.Default.Share, contentDescription = null) })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.template_delete_confirm_action)) },
+                            onClick = { showActions = false; onDelete() },
+                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = ClearCutAccents.Red) })
+                    }
+                }
+            }
+            Text(if (template.textOverlayCount > 0) stringResource(R.string.template_tracks_texts_format, template.trackTypes.size, template.textOverlayCount)
+                else stringResource(R.string.template_tracks_format, template.trackTypes.size), color = colors.subtext, style = MaterialTheme.typography.bodySmall)
+            Text(template.aspectRatio.label, color = colors.accent, style = MaterialTheme.typography.labelSmall)
+            if (template.compatibility.slotCount > 0) {
+                Text(stringResource(R.string.template_slots_format, template.compatibility.slotCount),
+                    color = colors.subtext, style = MaterialTheme.typography.labelSmall)
+            }
         }
     }
 }
@@ -635,24 +429,6 @@ private fun DeleteUserTemplateDialog(
         titleContentColor = LocalClearCutColors.current.text,
         textContentColor = LocalClearCutColors.current.subtext,
         shape = RoundedCornerShape(Radius.xxl)
-    )
-}
-
-@Composable
-private fun TemplateActionButton(
-    icon: ImageVector,
-    contentDescription: String,
-    tint: Color,
-    onClick: () -> Unit
-) {
-    ClearCutChromeIconButton(
-        icon = icon,
-        contentDescription = contentDescription,
-        onClick = onClick,
-        tint = tint,
-        containerColor = tint.copy(alpha = 0.12f),
-        borderColor = tint.copy(alpha = 0.18f),
-        shape = RoundedCornerShape(Radius.md)
     )
 }
 

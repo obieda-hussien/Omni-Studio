@@ -84,7 +84,6 @@ class LargeTextLayoutTest {
                 ),
             )
             compose.onNodeWithTag(ClearCutTestTags.EXPORT_CLOSE)
-                .performScrollTo()
                 .performClick()
             compose.waitUntilNoNodesExist(ClearCutTestTags.EXPORT_SHEET)
 
@@ -135,7 +134,6 @@ class LargeTextLayoutTest {
             .performClick()
         compose.waitUntilAtLeastOneExists(ClearCutTestTags.TEMPLATE_SHEET)
         compose.onNodeWithTag(ClearCutTestTags.TEMPLATE_GRID)
-            .performScrollTo()
             .performScrollToNode(hasTestTag(ClearCutTestTags.TEMPLATE_BLANK))
         compose.onNodeWithTag(ClearCutTestTags.TEMPLATE_BLANK)
             .assertIsDisplayed()
