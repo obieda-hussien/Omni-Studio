@@ -1,6 +1,6 @@
 package com.novacut.editor.omnilink
 
-import android.util.Log
+import com.novacut.editor.engine.AppLog
 import com.omnilink.sdk.AccessController
 import com.omnilink.sdk.AccessDecision
 import com.omnilink.sdk.ActionError
@@ -40,7 +40,7 @@ class OmniStudioExtensionService : ExtensionService() {
 
     override val auditLogger: AuditLogger = object : AuditLogger {
         override fun log(caller: CallerContext, request: ActionRequest, result: ActionOutcome) {
-            Log.i(
+            AppLog.i(
                 TAG,
                 "caller=${caller.callingPackage} capability=${request.name} outcome=${result::class.simpleName}"
             )
