@@ -22,6 +22,10 @@ fun resolveSigningSecret(vararg keys: String): String? {
 }
 
 val runtimeNoticeGeneratedDir = layout.buildDirectory.dir("generated/source/runtimeNotices")
+val ciUnsignedRelease = providers.gradleProperty("omni.ciUnsignedRelease")
+    .orNull
+    ?.toBooleanStrictOrNull()
+    ?: false
 val bundleTaskRequested = gradle.startParameter.taskNames.any { taskName ->
     taskName.substringAfterLast(':').startsWith("bundle", ignoreCase = true)
 }
@@ -96,7 +100,9 @@ android {
             // every installed user with no migration path. The release build fails
             // loudly instead, and `verifyReleaseSigningIdentity` proves the resolved
             // key is the one every published release already carries.
-            signingConfig = signingConfigs.getByName("release")
+            if (!ciUnsignedRelease) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         create("streaming") {
             initWith(getByName("debug"))
@@ -728,7 +734,7 @@ val verifyReleaseSigningIdentity = tasks.register("verifyReleaseSigningIdentity"
 }
 
 tasks.configureEach {
-    if (name == "preReleaseBuild") {
+    if (name == "preReleaseBuild" && !ciUnsignedRelease) {
         dependsOn(verifyReleaseSigningIdentity)
     }
 }
@@ -791,8 +797,8 @@ dependencies {
     // Lifecycle otherwise constrains Android tests to 1.7.3, which crashes
     // MigrationTestHelper before migrations can run (AbstractMethodError).
     implementation(platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:1.8.1"))
-    // Omni ecosystem — first-party, same-signer capability provider.
-    implementation("com.github.obieda-hussien.OmniLinkSDK:omni-link-sdk:0a0607a0df535bd9f1db79ab36f0aba3c21423b7")
+    // Omni ecosystem — official OmniLinkSDK 3.0.0 first-party Android surface.
+    implementation("com.github.obieda-hussien.OmniLinkSDK:omni-link-sdk:v3.0.0")
 
     // Core
     implementation(libs.androidx.core.ktx)
