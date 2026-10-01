@@ -219,13 +219,14 @@ class JvmVisualVerificationTest {
         val id = runBlocking {
             compose.activity.projectDao.getAllProjectsSnapshot().single().id
         }
-        compose.onNodeWithTag("project_menu_$id").performClick()
+        waitUntilAtLeastOneExists("project_menu_$id", useUnmergedTree = true)
+        compose.onNodeWithTag("project_menu_$id", useUnmergedTree = true).performScrollTo().performClick()
         compose.onNodeWithTag("project_delete_$id").performClick()
-        waitUntilAtLeastOneExists("project_restore_$id")
+        waitUntilAtLeastOneExists("project_restore_$id", useUnmergedTree = true)
         compose.activityRule.scenario.recreate()
         waitUntilAtLeastOneExists(ClearCutTestTags.PROJECTS_SCREEN)
-        waitUntilAtLeastOneExists("project_restore_$id")
-        compose.onNodeWithTag("project_restore_$id").performClick()
+        waitUntilAtLeastOneExists("project_restore_$id", useUnmergedTree = true)
+        compose.onNodeWithTag("project_restore_$id", useUnmergedTree = true).performScrollTo().performClick()
         waitUntilAtLeastOneExists("${ClearCutTestTags.PROJECT_CARD_PREFIX}$id")
         assertEquals(null, runBlocking { compose.activity.projectDao.getProject(id)?.deletedAtEpochMs })
     }
@@ -326,9 +327,13 @@ class JvmVisualVerificationTest {
         updatedProject.id
     }
 
-    private fun waitUntilAtLeastOneExists(tag: String, timeoutMillis: Long = 10_000L) {
+    private fun waitUntilAtLeastOneExists(
+        tag: String,
+        timeoutMillis: Long = 10_000L,
+        useUnmergedTree: Boolean = false,
+    ) {
         compose.waitUntil(timeoutMillis) {
-            compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
+            compose.onAllNodesWithTag(tag, useUnmergedTree = useUnmergedTree).fetchSemanticsNodes().isNotEmpty()
         }
     }
 

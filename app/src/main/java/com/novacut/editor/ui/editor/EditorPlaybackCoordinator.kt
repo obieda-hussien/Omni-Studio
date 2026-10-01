@@ -196,9 +196,7 @@ class EditorPlaybackCoordinator internal constructor(
     fun playFromTimelinePosition(positionMs: Long, restartSession: Boolean) {
         runtimeRecoveryAttempted = false
         runtimeRecoveryPositionMs = null
-        port.setScrubbingMode(false)
-        port.playFromTimelinePosition(positionMs, restartSession)
-        armPlaybackStartRecovery(positionMs)
+        if (requestPlayback(positionMs, restartSession)) armPlaybackStartRecovery(positionMs)
     }
 
     fun pause() {
@@ -227,7 +225,7 @@ class EditorPlaybackCoordinator internal constructor(
         active.onPlayingChanged(false)
         active.onPlaybackRequestedChanged(false)
 
-        if (!isRecoverablePreviewRuntimeFailure(error) || runtimeRecoveryAttempted) {
+        if (!isRecoverablePreviewRuntimeFailure(error)) {
             active.onUnrecoverableError(error)
             return
         }
@@ -241,6 +239,11 @@ class EditorPlaybackCoordinator internal constructor(
                 "EditorPlaybackCoordinator",
                 "Treating a stuck-player signal at timeline end as normal completion",
             )
+            return
+        }
+
+        if (runtimeRecoveryAttempted) {
+            active.onUnrecoverableError(error)
             return
         }
 
@@ -262,8 +265,9 @@ class EditorPlaybackCoordinator internal constructor(
             )
             current.onSurfaceRecoveryPosition(recoveryPositionMs)
             runtimeRecoveryPositionMs = recoveryPositionMs
-            port.playFromTimelinePosition(recoveryPositionMs, restartSession = true)
-            armPlaybackStartRecovery(recoveryPositionMs)
+            if (requestPlayback(recoveryPositionMs, restartSession = true)) {
+                armPlaybackStartRecovery(recoveryPositionMs)
+            }
         }
     }
 
@@ -285,7 +289,7 @@ class EditorPlaybackCoordinator internal constructor(
                 "EditorPlaybackCoordinator",
                 "Playback did not advance after request; resetting at $recoveryPositionMs ms",
             )
-            port.playFromTimelinePosition(recoveryPositionMs, restartSession = true)
+            if (!requestPlayback(recoveryPositionMs, restartSession = true)) return@launch
             wait(playbackStartFailureDelayMs)
             val recoveredPositionMs = port.getAbsolutePositionMs()
             if (port.isPlaybackRequested() &&
@@ -296,6 +300,25 @@ class EditorPlaybackCoordinator internal constructor(
                 active.onPlaybackRequestedChanged(false)
                 active.onPlaybackStartFailed()
             }
+        }
+    }
+
+    private fun requestPlayback(positionMs: Long, restartSession: Boolean): Boolean {
+        return try {
+            port.setScrubbingMode(false)
+            port.playFromTimelinePosition(positionMs, restartSession)
+            true
+        } catch (error: Exception) {
+            if (error is kotlinx.coroutines.CancellationException) throw error
+            AppLog.e("EditorPlaybackCoordinator", "Preview session could not start", error)
+            cancelRecoveryJobs()
+            runCatching { port.pause() }
+            callbacks?.let { active ->
+                active.onPlayingChanged(false)
+                active.onPlaybackRequestedChanged(false)
+                active.onPlaybackStartFailed()
+            }
+            false
         }
     }
 

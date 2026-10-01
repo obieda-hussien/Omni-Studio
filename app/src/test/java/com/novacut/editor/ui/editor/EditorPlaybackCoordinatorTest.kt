@@ -80,6 +80,18 @@ class EditorPlaybackCoordinatorTest {
     }
 
     @Test
+    fun synchronousSessionSetupFailureIsReportedWithoutEscapingTheEditor() = runBlocking {
+        val port = FakePlaybackPort().apply { failOnPlay = true }
+        val events = mutableListOf<String>()
+        val coordinator = coordinator(port)
+        coordinator.start(this, callbacks(events, { snapshot() }))
+        coordinator.playFromTimelinePosition(0L, restartSession = false)
+        assertTrue(events.contains("start-failed"))
+        assertFalse(port.requested)
+        coordinator.stop()
+    }
+
+    @Test
     fun repeatedDecoderErrorsStopAfterOneAutomaticRecovery() = runBlocking {
         val port = FakePlaybackPort()
         val events = mutableListOf<String>()
@@ -193,6 +205,7 @@ class EditorPlaybackCoordinatorTest {
         var loopingEnabled = false
         var emitPlayingOnPlay = false
         var scrubbingAtPlay = false
+        var failOnPlay = false
         private var listener: Player.Listener? = null
 
         override fun setPlayerListener(listener: Player.Listener) {
@@ -210,6 +223,7 @@ class EditorPlaybackCoordinatorTest {
         override fun getAbsolutePositionMs(): Long = positionMs
 
         override fun playFromTimelinePosition(positionMs: Long, restartSession: Boolean) {
+            if (failOnPlay) throw IllegalStateException("preview setup")
             this.positionMs = positionMs
             requested = true
             ended = false
