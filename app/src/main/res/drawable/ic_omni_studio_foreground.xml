@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Omni family badge: organic dark-indigo silhouette. -->
+    <path
+        android:pathData="M54,15C62,15 66,20 72,22C79,24 86,21 91,27C96,33 92,39 94,46C97,53 102,59 98,66C94,73 86,73 81,79C76,85 77,93 69,97C62,101 56,96 49,97C41,99 35,103 28,99C21,95 22,87 18,81C13,75 6,72 7,64C8,56 15,53 17,46C19,39 16,31 22,26C28,21 35,24 42,21C47,18 49,15 54,15Z"
+        android:fillColor="#FF12102B"
+        android:strokeColor="#FF33237A"
+        android:strokeWidth="1.6" />
+
+    <!-- Layered creative frames: image / audio / video as one workspace. -->
+    <path
+        android:pathData="M32,31H67C72,31 75,34 75,39V64C75,69 72,72 67,72H32C27,72 24,69 24,64V39C24,34 27,31 32,31Z"
+        android:fillColor="#1A4F46E5"
+        android:strokeColor="#FF4F46E5"
+        android:strokeWidth="4"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M39,36H74C79,36 82,39 82,44V69C82,74 79,77 74,77H39C34,77 31,74 31,69V44C31,39 34,36 39,36Z"
+        android:fillColor="#187C3AED"
+        android:strokeColor="#FF7C3AED"
+        android:strokeWidth="4"
+        android:strokeLineJoin="round" />
+
+    <path
+        android:pathData="M35,41H70C75,41 78,44 78,49V70C78,75 75,78 70,78H35C30,78 27,75 27,70V49C27,44 30,41 35,41Z"
+        android:fillColor="#E61A1538"
+        android:strokeColor="#FFC084FC"
+        android:strokeWidth="3"
+        android:strokeLineJoin="round" />
+
+    <!-- Studio ribbon / S: creative intent transformed into timeline operations. -->
+    <path
+        android:pathData="M66,45C61,39 49,38 44,44C39,50 43,55 54,56C65,57 70,61 67,68C64,76 51,78 42,71"
+        android:fillColor="#00000000"
+        android:strokeColor="#FFF8F7FF"
+        android:strokeWidth="5.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Magenta endpoint connects Studio to the wider Omni creative graph. -->
+    <path
+        android:pathData="M42,71C48,76 58,77 64,72"
+        android:fillColor="#00000000"
+        android:strokeColor="#FFF472B6"
+        android:strokeWidth="3.1"
+        android:strokeLineCap="round" />
+
+    <!-- Spark: generated/agent-assisted creative action, intentionally secondary. -->
+    <path
+        android:pathData="M82,25L84.2,30.8L90,33L84.2,35.2L82,41L79.8,35.2L74,33L79.8,30.8Z"
+        android:fillColor="#FFF8F7FF" />
+    <path
+        android:pathData="M88,42L89.3,45.2L92.5,46.5L89.3,47.8L88,51L86.7,47.8L83.5,46.5L86.7,45.2Z"
+        android:fillColor="#FFF472B6" />
+</vector>
