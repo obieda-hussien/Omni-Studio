@@ -42,11 +42,7 @@ jobs:
         uses: gradle/actions/wrapper-validation@v6
 
       - name: Unit tests
-        run: ./gradlew :app:testQaUnitTest --write-verification-metadata sha256 --stacktrace
-
-      - name: Show dependency verification additions
-        if: always()
-        run: git diff -- gradle/verification-metadata.xml || true
+        run: ./gradlew :app:testQaUnitTest --stacktrace
 
       - name: Lint
         run: ./gradlew :app:lintDebug --stacktrace
