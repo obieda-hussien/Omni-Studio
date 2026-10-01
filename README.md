@@ -67,7 +67,7 @@ Large media is not serialized into Binder JSON. Future media exchange uses bound
 ## Workspace organization
 
 The editor uses a stable tool rail with adaptive action workbenches, a quieter preview,
-and focused settings destinations. See [workspace behavior and verification](docs/WORKSPACE_UX.md).
+and focused settings destinations. See [workspace behavior and verification](docs/ARCHITECTURE.md#workspace-organization).
 
 ## Existing editor baseline
 

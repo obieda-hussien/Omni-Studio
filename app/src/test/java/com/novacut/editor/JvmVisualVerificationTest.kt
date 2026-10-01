@@ -82,6 +82,7 @@ class JvmVisualVerificationTest {
         waitUntilAtLeastOneExists(ClearCutTestTags.SETTINGS_SCREEN)
         capture("settings-dark.png")
 
+        compose.onNodeWithTag("settings_category_app").performClick()
         compose.onNodeWithTag(ClearCutTestTags.SETTINGS_PRIVACY_OPEN)
             .performScrollTo()
             .performClick()
@@ -129,6 +130,7 @@ class JvmVisualVerificationTest {
         waitUntilAtLeastOneExists(ClearCutTestTags.SETTINGS_SCREEN)
         capture("settings-high-contrast-dark.png")
 
+        compose.onNodeWithTag("settings_category_app").performClick()
         compose.onNodeWithTag(ClearCutTestTags.SETTINGS_PRIVACY_OPEN)
             .performScrollTo()
             .performClick()
@@ -159,6 +161,7 @@ class JvmVisualVerificationTest {
         waitUntilAtLeastOneExists(ClearCutTestTags.PROJECTS_SCREEN)
         compose.onNodeWithTag(ClearCutTestTags.PROJECTS_SETTINGS).performClick()
         waitUntilAtLeastOneExists(ClearCutTestTags.SETTINGS_SCREEN)
+        compose.onNodeWithTag("settings_category_app").performClick()
         compose.onNodeWithTag(ClearCutTestTags.SETTINGS_REPLAY_TUTORIAL)
             .performScrollTo()
             .performClick()
