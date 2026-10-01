@@ -1,12 +1,12 @@
 {
   "assets": [
     {
-      "altText": "Omni Studio cut O and media mark",
-      "caption": "Lavender Omni O with two editing cuts and a white media glyph on ink.",
+      "altText": "Omni Studio ribbon on the scalloped Omni family badge",
+      "caption": "A lavender-to-orchid Studio ribbon on the dark eight-lobe Omni badge.",
       "height": 512,
       "path": "icon.png",
       "source": "_source/icon.svg",
-      "sourceSha256": "68fdb988a5fb545e165c31bbd3d3cb963e8d7c51ac781210987db034a0949335",
+      "sourceSha256": "e2e5443845524504ada948d488d8a1d660e73519d4e527496c90721169cf9cdb",
       "sourceType": "generated-svg",
       "width": 512
     },

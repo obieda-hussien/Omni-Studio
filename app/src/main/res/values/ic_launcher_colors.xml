@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#111122</color>
-    <color name="omni_studio_lavender">#8E8DE5</color>
-    <color name="omni_studio_highlight">#F8F7FF</color>
+    <color name="ic_launcher_background">#0E0E1B</color>
+    <color name="omni_studio_lavender">#BEB8FF</color>
+    <color name="omni_studio_violet">#9B83EE</color>
+    <color name="omni_studio_pink">#DB7DD5</color>
 </resources>
