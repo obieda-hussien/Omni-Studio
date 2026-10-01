@@ -1,12 +1,12 @@
 {
   "assets": [
     {
-      "altText": "ClearCut app icon",
-      "caption": "High-resolution Play Store icon.",
+      "altText": "Omni Studio cut O and media mark",
+      "caption": "Lavender Omni O with two editing cuts and a white media glyph on ink.",
       "height": 512,
       "path": "icon.png",
       "source": "_source/icon.svg",
-      "sourceSha256": "dc7f4a927479090525e3041e13ee826165a16e1f108371aa76a85fb074a06e3c",
+      "sourceSha256": "68fdb988a5fb545e165c31bbd3d3cb963e8d7c51ac781210987db034a0949335",
       "sourceType": "generated-svg",
       "width": 512
     },
@@ -110,5 +110,5 @@
     }
   ],
   "schema": "com.clearcut.play-listing-assets.v1",
-  "updated": "2026-08-11"
+  "updated": "2026-10-01"
 }

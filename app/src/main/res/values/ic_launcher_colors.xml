@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#0B0B1F</color>
-    <color name="omni_studio_indigo">#4F46E5</color>
-    <color name="omni_studio_violet">#7C3AED</color>
-    <color name="omni_studio_lavender">#C084FC</color>
-    <color name="omni_studio_pink">#F472B6</color>
+    <color name="ic_launcher_background">#111122</color>
+    <color name="omni_studio_lavender">#8E8DE5</color>
     <color name="omni_studio_highlight">#F8F7FF</color>
 </resources>

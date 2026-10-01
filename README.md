@@ -1,5 +1,7 @@
 # Omni Studio
 
+<p align="center"><img src="icon.png" width="160" alt="Omni Studio" /></p>
+
 **Agent-Native Creative Suite for Android**
 
 Omni Studio evolves a mature Android video editor into an agent-native creative runtime: humans keep a full manual editor, while trusted Omni agents interact through explicit, inspectable, reversible semantic capabilities instead of brittle screen automation.

@@ -2,58 +2,45 @@
 
 ## Product mark
 
-Omni Studio uses a vector-first Android identity designed to remain recognizable at launcher size and
-to sit naturally beside the rest of the Omni ecosystem.
+The mark is a bold **O** for Omni with two diagonal **editing cuts** and a small rounded
+**media glyph**. The O anchors Studio in the ecosystem; the cuts communicate creating and
+editing, and the center makes the media workspace recognizable at launcher size.
 
-The mark combines four ideas:
-
-- an **organic dark Omni badge** shared with the wider family;
-- **three overlapping creative frames** representing video, audio, image and layered composition;
-- an **S-shaped ribbon/timeline path** representing Studio and non-destructive editing;
-- two restrained **creative sparkles** representing agent-assisted creative work without making AI the
-  entire product identity.
-
-The icon intentionally avoids a play triangle because Omni Studio is a creative suite, not only a video
-player/editor.
+Use this single mark without extra frames, sparkles, outlines, badges or lettering.
+The flat background and generous negative space keep it readable at 24–48 px.
 
 ## Palette
 
 | Token | Value | Role |
-|---|---:|---|
-| Ink | `#0B0B1F` | launcher/background base |
-| Indigo | `#4F46E5` | first creative frame |
-| Violet | `#7C3AED` | ecosystem primary |
-| Lavender | `#C084FC` | inner frame/highlight |
-| Pink | `#F472B6` | creative continuation accent |
-| Highlight | `#F8F7FF` | ribbon/spark |
+|---|---|---|
+| Ink | `#111122` | Full-bleed launcher/store background |
+| Omni lavender | `#8E8DE5` | O and editing cuts |
+| Highlight | `#F8F7FF` | Media glyph |
 
-## Android source of truth
+## Android identity
 
-Runtime launcher identity is XML/vector-first:
+- `res/drawable/ic_omni_studio_background.xml`: flat full-bleed ink.
+- `res/drawable/ic_omni_studio_foreground.xml`: cut O and media glyph.
+- `res/drawable/ic_omni_studio_monochrome.xml`: identical geometry in one color.
+- `res/mipmap-anydpi/ic_launcher.xml` and `ic_launcher_round.xml`: vector fallback.
+- `res/mipmap-anydpi-v26/ic_launcher.xml` and `ic_launcher_round.xml`: adaptive versions.
+- `res/values/ic_launcher_colors.xml`: palette.
 
-```text
-res/drawable/ic_omni_studio_background.xml
-res/drawable/ic_omni_studio_foreground.xml
-res/drawable/ic_omni_studio_monochrome.xml
-res/mipmap-anydpi/ic_launcher.xml
-res/mipmap-anydpi/ic_launcher_round.xml
-res/mipmap-anydpi-v26/ic_launcher.xml
-res/mipmap-anydpi-v26/ic_launcher_round.xml
-res/values/ic_launcher_colors.xml
-```
+All foreground geometry fits within a radius of 30 in the 108-unit viewport, inside the
+central 66-unit adaptive safe circle. Android supplies the launcher mask; do not bake
+rounded corners or a second badge into the background. Round and squircle masks preserve
+the whole mark. Android 13+ themed icons retain the same silhouette and both cuts.
+There are no density-specific raster launcher overrides.
 
-There are deliberately no density-specific `ic_launcher*.png` files. This prevents a device,
-launcher shape, or API-level fallback from resurfacing the retired ClearCut raster identity.
+## Store and repository
 
-Android 13+ themed icons use the dedicated monochrome vector.
+The same paths, proportions and flat colors are used in:
 
-## Store/repository artwork
+- `fastlane/metadata/android/en-US/images/_source/icon.svg`: store source, 1024-unit output.
+- `fastlane/metadata/android/en-US/images/icon.png`: 512 × 512 store PNG.
+- `icon.png`: identical repository PNG.
+- `docs/branding/omni-studio-logo.svg`: scalable product mark.
 
-The same geometry and palette are mirrored into:
-
-- `fastlane/metadata/android/en-US/images/_source/icon.svg`
-- `fastlane/metadata/android/en-US/images/icon.png`
-- `icon.png`
-
-Store artwork may use richer gradients and soft depth, but it must preserve the same silhouette and
-central S/layered-frame motif as the runtime vector.
+Store PNGs are opaque, square and full-bleed. The listing generator reads the current
+`_source/icon.svg`, so regeneration cannot restore the retired product icon. Update the
+icon entry's source checksum in `asset_inventory.json` whenever the source changes.
