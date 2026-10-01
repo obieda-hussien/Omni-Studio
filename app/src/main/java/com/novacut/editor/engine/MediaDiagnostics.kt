@@ -107,6 +107,7 @@ internal data class MediaTimestampStats(
     val lastSyncFrameUs: Long? = null,
     val syncFrameCount: Int = 0,
     val scanTruncated: Boolean = false,
+    val hasNonMonotonicSyncTimestamps: Boolean = false,
 )
 
 internal fun timestampRiskFor(
@@ -114,7 +115,10 @@ internal fun timestampRiskFor(
     isVideo: Boolean,
 ): String? = when {
     stats.sampleCount == 0 -> "No readable samples were found."
-    stats.hasNonMonotonicTimestamps -> "Sample timestamps are not monotonic."
+    // Extractor samples are in decode order, while sampleTime is presentation
+    // time. B-frame reordering in valid AVC/HEVC must not label a file unhealthy.
+    isVideo && stats.hasNonMonotonicSyncTimestamps -> "Video sync timestamps are not monotonic."
+    !isVideo && stats.hasNonMonotonicTimestamps -> "Sample timestamps are not monotonic."
     isVideo && !stats.hasSyncFrames -> "No video sync frames were reported."
     else -> null
 }
@@ -327,6 +331,7 @@ class MediaDiagnosticsProbe @Inject constructor(
         var lastSyncFrameUs: Long? = null
         var syncFrameCount = 0
         var scanTruncated = false
+        var hasNonMonotonicSyncTimestamps = false
         try {
             while (true) {
                 val sampleTimeUs = extractor.sampleTime
@@ -339,6 +344,9 @@ class MediaDiagnosticsProbe @Inject constructor(
                 if (isVideo && extractor.sampleFlags and MediaExtractor.SAMPLE_FLAG_SYNC != 0) {
                     syncFrameCount++
                     if (firstSyncFrameUs == null) firstSyncFrameUs = sampleTimeUs
+                    if (lastSyncFrameUs?.let { sampleTimeUs < it } == true) {
+                        hasNonMonotonicSyncTimestamps = true
+                    }
                     lastSyncFrameUs = sampleTimeUs
                 }
                 if (sampleCount >= MAX_SAMPLES_TO_SCAN) {
@@ -358,6 +366,7 @@ class MediaDiagnosticsProbe @Inject constructor(
             lastSyncFrameUs = lastSyncFrameUs,
             syncFrameCount = syncFrameCount,
             scanTruncated = scanTruncated,
+            hasNonMonotonicSyncTimestamps = hasNonMonotonicSyncTimestamps,
         )
     }
 

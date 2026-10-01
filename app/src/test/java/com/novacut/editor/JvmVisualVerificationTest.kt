@@ -206,6 +206,30 @@ class JvmVisualVerificationTest {
         }
     }
 
+    @Test
+    fun deletingLastProjectThenRecreatingActivityKeepsTrashRestorable() {
+        compose.onNodeWithTag(ClearCutTestTags.PROJECTS_CREATE_PROJECT).performClick()
+        waitUntilAtLeastOneExists(ClearCutTestTags.TEMPLATE_SHEET)
+        compose.onNodeWithTag("new_project_name").performTextInput("Deletion recovery")
+        compose.onNodeWithTag(ClearCutTestTags.TEMPLATE_BLANK).performScrollTo().performClick()
+        waitUntilAtLeastOneExists(ClearCutTestTags.EDITOR_SCREEN)
+        dismissTutorialIfPresent()
+        compose.onNodeWithTag(ClearCutTestTags.EDITOR_BACK).performClick()
+        waitUntilNoExists(ClearCutTestTags.EDITOR_SCREEN)
+        val id = runBlocking {
+            compose.activity.projectDao.getAllProjectsSnapshot().single().id
+        }
+        compose.onNodeWithTag("project_menu_$id").performClick()
+        compose.onNodeWithTag("project_delete_$id").performClick()
+        waitUntilAtLeastOneExists("project_restore_$id")
+        compose.activityRule.scenario.recreate()
+        waitUntilAtLeastOneExists(ClearCutTestTags.PROJECTS_SCREEN)
+        waitUntilAtLeastOneExists("project_restore_$id")
+        compose.onNodeWithTag("project_restore_$id").performClick()
+        waitUntilAtLeastOneExists("${ClearCutTestTags.PROJECT_CARD_PREFIX}$id")
+        assertEquals(null, runBlocking { compose.activity.projectDao.getProject(id)?.deletedAtEpochMs })
+    }
+
     private fun capture(name: String) {
         if (System.getProperty("clearcut.visual.capture") != "true") return
         compose.mainClock.advanceTimeBy(VISUAL_SETTLE_TIME_MS)

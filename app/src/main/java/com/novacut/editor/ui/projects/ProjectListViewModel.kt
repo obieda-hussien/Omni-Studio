@@ -53,6 +53,7 @@ import com.novacut.editor.model.TrackType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -123,6 +124,7 @@ class ProjectListViewModel @Inject constructor(
     private val _loadRetryToken = MutableStateFlow(0)
 
     private val _loadFailed = MutableStateFlow(false)
+    private val _trashLoadFailed = MutableStateFlow(false)
 
     /**
      * True when the project query itself failed. A Room exception used to terminate
@@ -130,7 +132,9 @@ class ProjectListViewModel @Inject constructor(
      * that could never resolve and offered no way back. Failure is a third state
      * alongside loading and empty, and it is retryable.
      */
-    val loadFailed: StateFlow<Boolean> = _loadFailed.asStateFlow()
+    val loadFailed: StateFlow<Boolean> = combine(_loadFailed, _trashLoadFailed) { active, trash ->
+        active || trash
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val allProjects: StateFlow<List<Project>> = _loadRetryToken
@@ -159,6 +163,7 @@ class ProjectListViewModel @Inject constructor(
     /** Re-subscribe to the project query after a failure. */
     fun retryLoadProjects() {
         _loadFailed.value = false
+        _trashLoadFailed.value = false
         _isLoading.value = true
         _loadRetryToken.value += 1
     }
@@ -206,17 +211,32 @@ class ProjectListViewModel @Inject constructor(
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val trashedProjects = projectDao.getTrashedProjects()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val trashedProjects = _loadRetryToken.flatMapLatest {
+        projectDao.getTrashedProjects()
+            .distinctUntilChanged()
+            .onEach { _trashLoadFailed.value = false }
+            .catch { error ->
+                AppLog.e(TAG, "Trash query failed", error)
+                _trashLoadFailed.value = true
+                emit(emptyList())
+            }
+    }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     init {
         refreshUserTemplates()
         viewModelScope.launch(Dispatchers.IO) {
-            val cutoffMs = System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000
-            val purged = purgeTrashedProjects(cutoffMs)
-            if (purged > 0) {
-                AppLog.d("ProjectListVM", "Auto-purged $purged trashed projects older than 30 days")
-                sweepManagedMediaAfterDeletion()
+            try {
+                val cutoffMs = System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000
+                val purged = purgeTrashedProjects(cutoffMs)
+                if (purged > 0) {
+                    AppLog.d("ProjectListVM", "Auto-purged $purged trashed projects older than 30 days")
+                    sweepManagedMediaAfterDeletion()
+                }
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                AppLog.w(TAG, "Automatic trash cleanup failed; preserving projects for retry", error)
             }
         }
         viewModelScope.launch {
@@ -233,22 +253,23 @@ class ProjectListViewModel @Inject constructor(
      * platform call.
      */
     private suspend fun refreshDynamicShortcuts(projects: List<Project>) {
-        val last = projects.maxByOrNull { it.updatedAt }
-        val hasRecovery = last?.id?.let { autoSave.hasRecoveryData(it) } ?: false
-        val state = ProjectShortcutPlanner.State(
-            lastProjectId = last?.id,
-            lastProjectName = last?.name,
-            hasRecoveryForLast = hasRecovery,
-        )
-        val planned = ProjectShortcutPlanner.planDynamic(state)
-        val shortcuts = planned.map { it.toShortcutInfoCompat(appContext) }
         try {
+            val last = projects.maxByOrNull { it.updatedAt }
+            val hasRecovery = last?.id?.let { autoSave.hasRecoveryData(it) } ?: false
+            val state = ProjectShortcutPlanner.State(
+                lastProjectId = last?.id,
+                lastProjectName = last?.name,
+                hasRecoveryForLast = hasRecovery,
+            )
+            val planned = ProjectShortcutPlanner.planDynamic(state)
+            val shortcuts = planned.map { it.toShortcutInfoCompat(appContext) }
             ShortcutManagerCompat.setDynamicShortcuts(appContext, shortcuts)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             // Some launchers (OEM forks) reject excess shortcuts or refuse
             // updates from a backgrounded process. The shortcut list is a
             // pure affordance — losing it is never worth a crash.
-            AppLog.w(TAG, "Failed to set dynamic shortcuts (${planned.size} entries)", e)
+            AppLog.w(TAG, "Failed to refresh dynamic shortcuts", e)
         }
     }
 
@@ -379,10 +400,12 @@ class ProjectListViewModel @Inject constructor(
     fun deleteProjectForever(project: Project) {
         viewModelScope.launch {
             try {
-                withContext(Dispatchers.IO) {
+                val deleted = withContext(Dispatchers.IO) {
                     deleteProjectAndCleanup(project)
                 }
-                showToast(appContext.getString(R.string.project_delete_forever_success, project.name))
+                showToast(if (deleted) {
+                    appContext.getString(R.string.project_delete_forever_success, project.name)
+                } else appContext.getString(R.string.project_delete_forever_failed))
             } catch (e: Exception) {
                 AppLog.w("ProjectListVM", "Failed to permanently delete ${project.id}", e)
                 showToast(appContext.getString(R.string.project_delete_forever_failed))
@@ -933,10 +956,15 @@ class ProjectListViewModel @Inject constructor(
     }
 
     private suspend fun loadUserTemplates() {
-        val templates = withContext(Dispatchers.IO) {
-            templateManager.listTemplates()
+        try {
+            val templates = withContext(Dispatchers.IO) {
+                templateManager.listTemplates()
+            }
+            _userTemplates.value = templates
+        } catch (error: Exception) {
+            if (error is CancellationException) throw error
+            AppLog.w(TAG, "Template library could not be loaded", error)
         }
-        _userTemplates.value = templates
     }
 
     private fun buildTracks(trackTypes: List<TrackType>, trackHeight: Int): List<Track> {

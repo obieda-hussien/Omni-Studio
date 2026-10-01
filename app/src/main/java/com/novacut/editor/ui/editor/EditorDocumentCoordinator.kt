@@ -71,7 +71,7 @@ class EditorDocumentCoordinator internal constructor(
 
     suspend fun open(projectId: String?, recoveryId: String): OpenResult {
         val project = if (projectId == null) null else loadProject(projectId)
-        if (projectId != null && project == null) {
+        if (projectId != null && (project == null || project.deletedAtEpochMs != null)) {
             return OpenResult(
                 project = null,
                 recovery = null,

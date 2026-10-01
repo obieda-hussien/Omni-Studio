@@ -43,6 +43,23 @@ private const val TAG = "VideoEngine"
 private const val DEFAULT_STILL_IMAGE_DURATION_MS = 3_000L
 private const val SPEED_CURVE_PREVIEW_STEP_US = 10_000L
 
+/** Shared with device tests so they exercise the production preview configuration. */
+@androidx.annotation.OptIn(UnstableApi::class, ExperimentalApi::class)
+internal fun createPreviewCompositionPlayer(context: Context, multipleVisualInputs: Boolean): CompositionPlayer {
+    val loadControl = DefaultLoadControl.Builder()
+        .setBufferDurationsMs(5_000, 50_000, 1_500, 3_000)
+        .setPrioritizeTimeOverSizeThresholds(true)
+        .build()
+    return CompositionPlayer.Builder(context)
+        .setLoadControl(loadControl)
+        .setVideoGraphFactory(
+            if (multipleVisualInputs) MultipleInputVideoGraph.Factory()
+            else SingleInputVideoGraph.Factory()
+        )
+        .setAudioAttributes(ClearCutAudioFocusPolicy.buildPreviewAttributes(), true)
+        .build()
+}
+
 private fun logAndroid15LoudnessIntegration(stage: String) {
     if (Android15MediaPolicy.loudnessIntegrationForSdk(Build.VERSION.SDK_INT) ==
         Android15MediaPolicy.LoudnessIntegration.MEDIA3_PLATFORM_CONTROLLER
@@ -217,6 +234,9 @@ class VideoEngine @Inject constructor(
     )
 
     private var player: CompositionPlayer? = null
+    private val _previewPlayer = MutableStateFlow<Player?>(null)
+    val previewPlayer: StateFlow<Player?> = _previewPlayer
+    private var previewUsesMultipleInputs = false
     private var playerLease: CodecLease<Unit>? = null
     private var playerListener: Player.Listener? = null
     private var previewCompositionPlan = PreviewCompositionPlan.create(emptyList())
@@ -392,26 +412,13 @@ class VideoEngine @Inject constructor(
         if (player == null) {
             val lease = CodecInstanceBudget.acquirePlayerBlocking()
             try {
-                val loadControl = DefaultLoadControl.Builder()
-                    .setBufferDurationsMs(
-                        /* minBufferMs */ 5_000,
-                        /* maxBufferMs */ 50_000,
-                        /* bufferForPlaybackMs */ 1_500,
-                        /* bufferForPlaybackAfterRebufferMs */ 3_000
-                    )
-                    .setPrioritizeTimeOverSizeThresholds(true)
-                    .build()
-                val previewAudioAttributes = ClearCutAudioFocusPolicy.buildPreviewAttributes()
                 logAndroid15LoudnessIntegration("Preview")
-                player = CompositionPlayer.Builder(context)
-                    .setLoadControl(loadControl)
-                    .setVideoGraphFactory(MultipleInputVideoGraph.Factory())
-                    .setAudioAttributes(previewAudioAttributes, true)
-                    .build()
+                player = createPreviewCompositionPlayer(context, previewUsesMultipleInputs)
                     .apply {
                         playerListener?.let(::addListener)
                     }
                 playerLease = lease
+                _previewPlayer.value = player
             } catch (t: Throwable) {
                 player?.release()
                 player = null
@@ -458,9 +465,9 @@ class VideoEngine @Inject constructor(
         config: ExportConfig = ExportConfig(),
         trackedObjects: List<TrackedObject> = emptyList(),
     ) {
-        val p = getPlayer() as CompositionPlayer
-        val resumePlayback = p.playWhenReady && p.playbackState != Player.STATE_ENDED
-        p.pause()
+        val resumePlayback = isPlaybackRequested() && !isPlaybackEnded()
+        val looping = player?.repeatMode ?: Player.REPEAT_MODE_OFF
+        player?.pause()
         previewTrackedObjects = trackedObjects
         previewTracks = tracks
         previewMissingClipIds = missingClipIds
@@ -473,6 +480,13 @@ class VideoEngine @Inject constructor(
             config = config,
             trackedObjects = trackedObjects,
         )
+        val usesMultipleInputs = composition.sequences.count { C.TRACK_TYPE_VIDEO in it.trackTypes } > 1
+        if (previewUsesMultipleInputs != usesMultipleInputs) {
+            releasePreviewPlayer()
+            previewUsesMultipleInputs = usesMultipleInputs
+        }
+        val p = getPlayer() as CompositionPlayer
+        p.repeatMode = looping
         p.setComposition(composition, startPositionMs.coerceIn(0L, previewCompositionPlan.durationMs))
         setPreviewSpeed(1f)
         p.prepare()
@@ -489,7 +503,10 @@ class VideoEngine @Inject constructor(
     fun play() { player?.play() }
 
     fun playFromTimelinePosition(positionMs: Long, restartSession: Boolean = false) {
-        val p = player ?: return
+        var p = player ?: return
+        // A cancelled trim/scrub gesture must not leave audio, video and the clock
+        // suppressed after the user explicitly presses Play.
+        p.setScrubbingModeEnabled(false)
         val resetSession = playbackSessionNeedsReset(
             forceRestart = restartSession,
             playbackState = p.playbackState,
@@ -499,8 +516,13 @@ class VideoEngine @Inject constructor(
         if (resetSession) {
             // A seek can move an ended player to BUFFERING before Play runs,
             // while retaining the stale ended media period/decoder session.
-            // Stop first so prepare creates a fresh period at the edit point.
-            p.stop()
+            // Recreate the player and GL graph together; stop/prepare alone can
+            // retain the broken frame pipeline on some hardware decoders.
+            val looping = p.repeatMode
+            releasePreviewPlayer()
+            prepareTimeline(previewTracks, previewMissingClipIds, positionMs, previewConfig, previewTrackedObjects)
+            p = requireNotNull(player)
+            p.repeatMode = looping
         }
         p.seekTo(positionMs.coerceIn(0L, previewCompositionPlan.durationMs))
         if (resetSession || p.playbackState == Player.STATE_IDLE) {
@@ -2923,10 +2945,7 @@ class VideoEngine @Inject constructor(
 
     fun release() {
         removePlayerListener()
-        player?.release()
-        player = null
-        playerLease?.close()
-        playerLease = null
+        releasePreviewPlayer()
         if (noisyReceiverRegistered) {
             runCatching { context.unregisterReceiver(noisyReceiver) }
             noisyReceiverRegistered = false
@@ -2935,6 +2954,22 @@ class VideoEngine @Inject constructor(
         previewCompositionPlan = PreviewCompositionPlan.create(emptyList())
         clearThumbnailCache()
         healthScope.cancel()
+    }
+
+    /** Release only preview resources; export and the shared engine stay alive. */
+    private fun releasePreviewPlayer() {
+        val previous = player
+        player = null
+        _previewPlayer.value = null
+        try {
+            playerListener?.let { previous?.removeListener(it) }
+            previous?.release()
+        } catch (error: Exception) {
+            AppLog.w(TAG, "Failed to release the preview session", error)
+        } finally {
+            playerLease?.close()
+            playerLease = null
+        }
     }
 
 }

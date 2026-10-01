@@ -21,12 +21,13 @@ class MediaDiagnosticsTest {
             )
         )
         assertEquals(
-            "Sample timestamps are not monotonic.",
+            "Video sync timestamps are not monotonic.",
             timestampRiskFor(
                 MediaTimestampStats(
                     sampleCount = 12,
                     hasNonMonotonicTimestamps = true,
                     hasSyncFrames = true,
+                    hasNonMonotonicSyncTimestamps = true,
                 ),
                 isVideo = true,
             )
@@ -52,6 +53,17 @@ class MediaDiagnosticsTest {
                 isVideo = false,
             )
         )
+    }
+
+    @Test
+    fun bFramePresentationReorderingIsHealthyWhileAudioRegressionIsFlagged() {
+        val stats = MediaTimestampStats(
+            sampleCount = 8,
+            hasNonMonotonicTimestamps = true,
+            hasSyncFrames = true,
+        )
+        assertNull(timestampRiskFor(stats, isVideo = true))
+        assertEquals("Sample timestamps are not monotonic.", timestampRiskFor(stats, isVideo = false))
     }
 
     @Test

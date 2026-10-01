@@ -313,10 +313,14 @@ fun PreviewPanel(
                     ) {
                         var isBuffering by remember { mutableStateOf(false) }
                         var hasPlaybackError by remember { mutableStateOf(false) }
-                        DisposableEffect(engine) {
+                        val previewPlayer by engine.previewPlayer.collectAsState()
+                        val currentPlayer = previewPlayer ?: engine.getPlayer()
+                        DisposableEffect(currentPlayer) {
                             // Capture the player reference once; reuse on dispose to avoid
                             // attaching/removing on different player instances if engine state changes.
-                            val capturedPlayer = engine.getPlayer()
+                            val capturedPlayer = currentPlayer
+                            isBuffering = capturedPlayer.playbackState == Player.STATE_BUFFERING
+                            hasPlaybackError = capturedPlayer.playerError != null
                             val listener = object : Player.Listener {
                                 override fun onPlaybackStateChanged(state: Int) {
                                     isBuffering = state == Player.STATE_BUFFERING
@@ -325,7 +329,7 @@ fun PreviewPanel(
 
                                 override fun onPlayerError(error: PlaybackException) {
                                     isBuffering = false
-                                    hasPlaybackError = !isRecoverablePreviewRuntimeFailure(error)
+                                    hasPlaybackError = true
                                 }
                             }
                             capturedPlayer.addListener(listener)
@@ -348,19 +352,23 @@ fun PreviewPanel(
                                 }
                             },
                             update = { playerView ->
-                                val player = engine.getPlayer()
+                                val player = currentPlayer
                                 if (playerView.player !== player) playerView.player = player
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                                     (playerView.videoSurfaceView as? SurfaceView)
                                         ?.setDesiredHdrHeadroom(desiredPreviewHdrHeadroom)
                                 }
                             },
+                            onRelease = { it.player = null },
                             modifier = Modifier.fillMaxSize()
                         )
 
                         when {
                             hasPlaybackError -> {
-                                PreviewPlaybackErrorState(onOpenMediaManager = onOpenMediaManager)
+                                PreviewPlaybackErrorState(
+                                    onRetry = onTogglePlayback,
+                                    onOpenMediaManager = onOpenMediaManager,
+                                )
                             }
 
                             showGapState -> {
@@ -800,7 +808,7 @@ private fun PreviewUnavailableState() {
 }
 
 @Composable
-private fun PreviewPlaybackErrorState(onOpenMediaManager: () -> Unit) {
+private fun PreviewPlaybackErrorState(onRetry: () -> Unit, onOpenMediaManager: () -> Unit) {
     val semanticColors = LocalClearCutColors.current
     Card(
         modifier = Modifier.padding(16.dp),
@@ -832,13 +840,16 @@ private fun PreviewPlaybackErrorState(onOpenMediaManager: () -> Unit) {
                 textAlign = TextAlign.Center,
             )
             Button(
-                onClick = onOpenMediaManager,
+                onClick = onRetry,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = ClearCutAccents.Sky,
                     contentColor = semanticColors.background,
                 ),
                 shape = RoundedCornerShape(Radius.xl),
             ) {
+                Text(stringResource(R.string.retry))
+            }
+            TextButton(onClick = onOpenMediaManager) {
                 Text(stringResource(R.string.preview_open_media_manager))
             }
         }

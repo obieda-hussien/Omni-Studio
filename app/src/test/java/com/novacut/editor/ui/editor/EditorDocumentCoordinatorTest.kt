@@ -14,6 +14,19 @@ import org.junit.Test
 class EditorDocumentCoordinatorTest {
 
     @Test
+    fun staleNavigationToTrashedProjectDoesNotLoadOrRestoreItsRecovery() = runBlocking {
+        val coordinator = EditorDocumentCoordinator(
+            loadProject = { Project(id = it, deletedAtEpochMs = 123L) },
+            loadRecovery = { error("A deleted project must stay in the trash") },
+            saveDocument = { _, _ -> error("not used") },
+            saveDatabase = { error("not used") },
+        )
+        val result = coordinator.open("deleted", "deleted")
+        assertTrue(result.projectNotFound)
+        assertEquals(null, result.recovery)
+    }
+
+    @Test
     fun openLoadsRoomBeforeRecoveryAndReportsMissingProjects() = runBlocking {
         val calls = mutableListOf<String>()
         val coordinator = EditorDocumentCoordinator(

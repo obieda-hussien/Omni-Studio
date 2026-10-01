@@ -1455,6 +1455,7 @@ private fun ProjectCard(
                         ClearCutChromeIconButton(
                             icon = Icons.Default.MoreVert,
                             contentDescription = stringResource(R.string.projects_more_cd),
+                            modifier = Modifier.testTag("project_menu_${project.id}"),
                             onClick = { showOverflowMenu = true },
                             shape = RoundedCornerShape(Radius.lg)
                         )
@@ -1495,6 +1496,7 @@ private fun ProjectCard(
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.projects_delete), color = ClearCutAccents.Red) },
+                                modifier = Modifier.testTag("project_delete_${project.id}"),
                                 leadingIcon = {
                                     Icon(
                                         Icons.Default.Delete,
@@ -1861,6 +1863,7 @@ private fun TrashedProjectCard(
                 ClearCutChromeIconButton(
                     icon = Icons.Default.RestoreFromTrash,
                     contentDescription = stringResource(R.string.trash_restore_cd),
+                    modifier = Modifier.testTag("project_restore_${project.id}"),
                     onClick = onRestore,
                     tint = ClearCutAccents.Green,
                     containerColor = ClearCutAccents.Green.copy(alpha = 0.08f),

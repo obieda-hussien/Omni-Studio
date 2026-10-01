@@ -1040,10 +1040,17 @@ class EditorViewModel @Inject constructor(
 
         // Load existing project if projectId provided, then restore auto-save
         viewModelScope.launch {
-            val openResult = documentCoordinator.open(
-                projectId = projectId,
-                recoveryId = autoSaveId,
-            )
+            val openResult = try {
+                documentCoordinator.open(projectId = projectId, recoveryId = autoSaveId)
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                AppLog.e("EditorViewModel", "Project could not be opened; preserving saved data", error)
+                recoveryOpenComplete = true
+                autoSaveBlockedByRecovery = true
+                _state.update { it.copy(projectNotFound = true) }
+                showToast(text(R.string.projects_load_failed_title), ToastSeverity.Error)
+                return@launch
+            }
             if (openResult.projectNotFound) {
                 // Opening a project that no longer exists used to silently create a
                 // blank one under the same id -- the user asked for their work and
@@ -1500,13 +1507,21 @@ class EditorViewModel @Inject constructor(
         val missingClipIds = _state.value.media.relinkReports
             .filter { it.value.state == MediaRelinkProbe.RelinkState.MISSING }
             .keys
-        videoEngine.prepareTimeline(
-            tracks = _state.value.tracks,
-            missingClipIds = missingClipIds,
-            startPositionMs = _state.value.playheadMs,
-            config = _state.value.exportConfig.copy(aspectRatio = _state.value.project.aspectRatio),
-            trackedObjects = _state.value.trackedObjects,
-        )
+        try {
+            videoEngine.prepareTimeline(
+                tracks = _state.value.tracks,
+                missingClipIds = missingClipIds,
+                startPositionMs = _state.value.playheadMs,
+                config = _state.value.exportConfig.copy(aspectRatio = _state.value.project.aspectRatio),
+                trackedObjects = _state.value.trackedObjects,
+            )
+        } catch (error: Exception) {
+            if (error is CancellationException) throw error
+            AppLog.e("EditorViewModel", "Preview setup failed", error)
+            playbackCoordinator.pause()
+            _state.update { it.copy(isPlaying = false, isPlaybackRequested = false) }
+            showToast(text(R.string.vm_preview_playback_failed_toast), ToastSeverity.Error)
+        }
         preloadVisibleWaveforms(_state.value)
     }
 
@@ -1905,6 +1920,10 @@ class EditorViewModel @Inject constructor(
             playbackCoordinator.pause()
             _state.update { it.copy(isPlaying = false, isPlaybackRequested = false) }
         } else {
+            scrubSeekJob?.cancel()
+            scrubSeekJob = null
+            isScrubbing = false
+            playbackCoordinator.setScrubbingMode(false)
             val missingCount = _state.value.media.relinkReports
                 .values.count { it.state == MediaRelinkProbe.RelinkState.MISSING }
             if (missingCount > 0) {
@@ -7028,6 +7047,7 @@ class EditorViewModel @Inject constructor(
         saveIndicatorJob?.cancel()
         toastJob?.cancel()
         playbackCoordinator.stop()
+        videoEngine.pause()
         aiToolsDelegate.cancelAiTool()
         documentCoordinator.stopAutoSave()
         backgroundJobCoordinator.removeObservers()
