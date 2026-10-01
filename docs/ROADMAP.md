@@ -18,13 +18,14 @@ This roadmap is intentionally architectural. It does not claim that planned capa
 ## Phase 0 — Foundation
 
 - [x] Establish **Omni Studio** product identity while retaining the legacy Android package identity until a migration decision is made.
-- [x] Add OmniLink 3 first-party dependency and protected ExtensionService.
+- [x] Add the official `v3.0.0` release of OmniLink 3 as the first-party dependency and protect the ExtensionService.
 - [x] Expose a minimal `studio.health` capability.
-- [x] Add CI for debug build, unit tests and lint.
+- [x] Add CI for optimized release APK/AAB builds, unit tests and release lint.
 - [x] Document architecture, trust boundaries and roadmap.
 - [ ] Verify shared Omni debug/release signing strategy before privileged cross-app testing.
 - [ ] Decide whether package migration from `com.novacut.editor` is worth breaking the existing install lineage.
-- [ ] Add contract tests for OmniLink manifest discovery and same-signer rejection.
+- [x] Add foundation contract tests for the official OmniLink coordinate, privileged manifest surfaces, vector launcher identity and release CI.
+- [ ] Add runtime Binder contract tests for manifest discovery and same-signer rejection.
 
 ## Phase 1 — Read-only project intelligence
 

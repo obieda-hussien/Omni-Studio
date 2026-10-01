@@ -43,6 +43,8 @@ The long-term goal is **Omni Studio — Agent-Native Creative Suite**: video fir
 
 ## OmniLink 3
 
+Omni Studio targets the [OmniLinkSDK v3.0.0 official release](https://github.com/obieda-hussien/OmniLinkSDK/releases/tag/v3.0.0). The tag resolves to the reviewed 3.0.0 source commit used during the foundation work.
+
 Omni Studio is a first-party Omni capability provider and Agent Gateway client. Same-device privileged integration uses OmniLink's Android Binder surface, requests both `BIND_EXTENSION` and `BIND_AGENT`, protects its exported extension with `BIND_EXTENSION`, and advertises Android 11+ package visibility for both OmniLink service actions.
 
 | Capability | Mode | Risk | Purpose |
@@ -163,7 +165,7 @@ com.novacut.editor/
 
 The public product name can evolve independently from the inherited source/package names. The OmniLink layer stays thin: it authenticates, authorizes, validates and maps protocol DTOs into domain operations. Editing logic belongs in domain services shared by UI, tests and agents.
 
-Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the foundation analysis.
+Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the foundation analysis and [docs/BRANDING.md](docs/BRANDING.md) for the vector icon system, palette and store-artwork contract.
 
 ## Agent-native roadmap
 

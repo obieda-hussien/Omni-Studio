@@ -46,14 +46,8 @@ jobs:
       - name: Refresh dependency freshness evidence
         run: python scripts/refresh_dependency_freshness.py --reviewed-on 2026-10-01
 
-      # One-run checksum bootstrap for the newly official v3.0.0 JitPack coordinate.
-      # The resulting metadata diff is reviewed and committed, then this flag is removed.
       - name: Unit tests
-        run: ./gradlew :app:testQaUnitTest --write-verification-metadata sha256 --stacktrace
-
-      - name: Show OmniLink verification metadata diff
-        if: always()
-        run: git diff -- gradle/verification-metadata.xml || true
+        run: ./gradlew :app:testQaUnitTest --stacktrace
 
       - name: Show dependency freshness diff
         if: always()
