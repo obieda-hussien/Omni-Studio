@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ClearCut</string>
+    <string name="app_name">Omni Studio</string>
     <!-- Cut list / marker import -->
     <string name="cut_list_import_empty">Nothing to import. Paste time ranges or markers first.</string>
     <string name="cut_list_import_no_valid_rows">No valid rows. Fix %1$d line(s) first.</string>
