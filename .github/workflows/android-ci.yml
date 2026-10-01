@@ -26,6 +26,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x gradlew
+
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
@@ -39,7 +42,13 @@ jobs:
         uses: gradle/actions/wrapper-validation@v4
 
       - name: Unit tests
-        run: ./gradlew :app:testDebugUnitTest --stacktrace
+        run: ./gradlew :app:testDebugUnitTest --write-verification-metadata sha256 --stacktrace
+
+      # Temporary bootstrap diagnostic: print only dependency-verification changes.
+      # This is removed once reviewed checksums are committed.
+      - name: Show dependency verification additions
+        if: always()
+        run: git diff -- gradle/verification-metadata.xml || true
 
       - name: Lint
         run: ./gradlew :app:lintDebug --stacktrace
