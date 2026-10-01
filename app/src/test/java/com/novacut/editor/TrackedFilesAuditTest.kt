@@ -50,7 +50,7 @@ class TrackedFilesAuditTest {
     /**
      * Sanity check: the public local-build/release contract files must remain
      * tracked. Planning and research markdown are intentionally local-only; the
-     * README is the only tracked markdown file in this repo.
+     * public release/architecture/roadmap documents are explicitly allowlisted.
      */
     @Test
     fun requiredPublicFilesRemainTracked() {
@@ -85,6 +85,8 @@ class TrackedFilesAuditTest {
             "docs/privacy-policy.md",
             "docs/play-data-safety.md",
             "docs/translations.md",
+            "docs/ARCHITECTURE.md",
+            "docs/ROADMAP.md",
         )
         val trackedPrivateMarkdown = tracked.filter { path ->
             path.endsWith(".md") && path !in releaseContractMarkdown
@@ -112,7 +114,7 @@ class TrackedFilesAuditTest {
         }
 
         assertTrue(
-            "ClearCut only tracks approved local CI automation. Unapproved GitHub workflow, " +
+            "Omni Studio only tracks approved CI automation. Unapproved GitHub workflow, " +
                 "Dependabot, and Renovate files must not be tracked. Offenders: $offenders",
             offenders.isEmpty()
         )
@@ -195,6 +197,9 @@ class TrackedFilesAuditTest {
             "app/build.gradle.kts",
             "app/src/main/AndroidManifest.xml",
             "gradle/libs.versions.toml",
+            "docs/ARCHITECTURE.md",
+            "docs/ROADMAP.md",
+            ".github/workflows/ci.yml",
         )
     }
 }
