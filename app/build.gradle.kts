@@ -298,6 +298,10 @@ val llvmExceptionLicense = RuntimeLicenseInfo(
 
 fun RuntimeLicenseInfo.forProject(projectUrl: String): RuntimeLicenseInfo = copy(projectUrl = projectUrl)
 
+val internalRuntimeGroupPrefixes = listOf(
+    "com.github.obieda-hussien.OmniLinkSDK",
+)
+
 val runtimeLicensePolicies = listOf(
     RuntimeLicensePolicy(listOf("com.google.protobuf"), bsd3License),
     RuntimeLicensePolicy(listOf("com.google.code.findbugs"), bsd3License),
@@ -411,6 +415,7 @@ val generateRuntimeOpenSourceNotices by tasks.registering {
             .incoming.resolutionResult.allComponents
             .mapNotNull { component -> component.moduleVersion }
             .filterNot { module -> module.group == rootProject.name && module.name == project.name }
+            .filterNot { module -> internalRuntimeGroupPrefixes.any { prefix -> module.group == prefix || module.group.startsWith("$prefix.") } }
             .distinctBy { module -> "${module.group}:${module.name}:${module.version}" }
             .sortedWith(compareBy({ it.group }, { it.name }, { it.version }))
 
@@ -786,6 +791,9 @@ dependencies {
     // Lifecycle otherwise constrains Android tests to 1.7.3, which crashes
     // MigrationTestHelper before migrations can run (AbstractMethodError).
     implementation(platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:1.8.1"))
+    // Omni ecosystem — first-party, same-signer capability provider.
+    implementation("com.github.obieda-hussien.OmniLinkSDK:omni-link-sdk:v3.0.0")
+
     // Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.exifinterface)
