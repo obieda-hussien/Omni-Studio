@@ -43,7 +43,7 @@ Large binary media must not be serialized into Binder JSON. Use stable reference
 
 ## Trust model
 
-Omni Studio consumes the first-party `omni-link-sdk`. The exported service is protected by `com.omnilink.sdk.permission.BIND_EXTENSION`, and OmniLink's default same-signer validator remains in force. Same signer establishes identity, not unlimited authority; the app-level access controller still gates every capability.
+Omni Studio consumes the official first-party `omni-link-sdk:v3.0.0`. It requests both OmniLink signature permissions (`BIND_EXTENSION` and `BIND_AGENT`), exposes its extension behind `BIND_EXTENSION`, and declares package-visibility queries for extension and Agent Gateway discovery. OmniLink's default same-signer validator remains in force. Same signer establishes identity, not unlimited authority; the app-level access controller still gates every capability.
 
 The foundation exposes only `studio.health`. Editing capabilities are deliberately deferred until adapters, transaction semantics and tests exist.
 
@@ -65,7 +65,7 @@ The foundation exposes only `studio.health`. Editing capabilities are deliberate
 - The repository has a large build/release surface; CI should start with a dependable debug gate before attempting release signing in hosted runners.
 - Agent-facing timeline contracts do not yet exist.
 - The runtime notice generator assumes resolved dependencies are open-source; first-party source-available OmniLink is therefore explicitly excluded from the open-source notice inventory and must be documented separately.
-- OmniLink 3 publication should be treated as an external release dependency. Until the `v3.0.0` artifact is verified, pinning a known v3 source commit is safer for CI.
+- OmniLinkSDK `v3.0.0` is the official integration baseline. Its release tag resolves to the reviewed 3.0.0 source commit; Gradle dependency verification must pin the JitPack artifacts used by CI.
 
 ## Definition of done for agent editing
 
