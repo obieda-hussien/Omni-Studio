@@ -792,7 +792,7 @@ dependencies {
     // MigrationTestHelper before migrations can run (AbstractMethodError).
     implementation(platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:1.8.1"))
     // Omni ecosystem — first-party, same-signer capability provider.
-    implementation("com.github.obieda-hussien.OmniLinkSDK:omni-link-sdk:v3.0.0")
+    implementation("com.github.obieda-hussien.OmniLinkSDK:omni-link-sdk:0a0607a0df535bd9f1db79ab36f0aba3c21423b7")
 
     // Core
     implementation(libs.androidx.core.ktx)
