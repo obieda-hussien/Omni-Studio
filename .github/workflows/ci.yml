@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Verify debug build
+    name: Verify release build
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -46,18 +46,40 @@ jobs:
       - name: Refresh dependency freshness evidence
         run: python scripts/refresh_dependency_freshness.py --reviewed-on 2026-10-01
 
+      # One-run checksum bootstrap for the newly official v3.0.0 JitPack coordinate.
+      # The resulting metadata diff is reviewed and committed, then this flag is removed.
       - name: Unit tests
-        run: ./gradlew :app:testQaUnitTest --stacktrace
+        run: ./gradlew :app:testQaUnitTest --write-verification-metadata sha256 --stacktrace
+
+      - name: Show OmniLink verification metadata diff
+        if: always()
+        run: git diff -- gradle/verification-metadata.xml || true
 
       - name: Show dependency freshness diff
         if: always()
         run: git diff -- scripts/dependency_freshness_snapshot.json || true
 
-      - name: Lint
-        run: ./gradlew :app:lintDebug --stacktrace
+      - name: Lint release
+        run: ./gradlew :app:lintRelease -Pomni.ciUnsignedRelease=true --stacktrace
 
-      - name: Assemble debug
-        run: ./gradlew :app:assembleDebug --stacktrace
+      - name: Assemble optimized release APKs
+        run: ./gradlew :app:assembleRelease -Pomni.ciUnsignedRelease=true --stacktrace
+
+      - name: Build release app bundle
+        run: ./gradlew :app:bundleRelease -Pomni.ciUnsignedRelease=true --stacktrace
+
+      - name: Write CI release notice
+        run: |
+          mkdir -p app/build/outputs/ci-release
+          cat > app/build/outputs/ci-release/README.txt <<'EOF'
+          Omni Studio CI release artifacts
+          =================================
+
+          These are minified/shrunk Android RELEASE builds.
+          They are intentionally unsigned when the repository's pinned production keystore is not available in CI.
+          Sign them with the approved Omni Studio/legacy-lineage release key before installation or distribution.
+          CI never falls back to the Android debug signing key.
+          EOF
 
       - name: Upload reports
         if: always()
@@ -69,9 +91,12 @@ jobs:
             app/build/reports/**
             app/build/test-results/**
 
-      - name: Upload debug APKs
+      - name: Upload release artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: omni-studio-debug-apks
+          name: omni-studio-release-unsigned
           if-no-files-found: error
-          path: app/build/outputs/apk/debug/*.apk
+          path: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
+            app/build/outputs/ci-release/README.txt
