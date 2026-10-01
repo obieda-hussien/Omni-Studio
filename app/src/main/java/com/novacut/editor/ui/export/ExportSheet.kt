@@ -2254,59 +2254,26 @@ private fun ExportStateCard(
                 liveRegion = LiveRegionMode.Polite
                 stateDescription = statusDescription
             },
-        colors = CardDefaults.cardColors(containerColor = colors.panel),
+        colors = CardDefaults.cardColors(containerColor = colors.panelRaised),
         border = BorderStroke(
             1.dp,
             if (colors.highContrast) colors.cardStrokeStrong else colors.cardStroke.copy(alpha = 0.9f)
         ),
         shape = RoundedCornerShape(Radius.xxl)
     ) {
-        Box(
-            modifier = Modifier.background(
-                Brush.verticalGradient(
-                    listOf(
-                        tint.copy(alpha = 0.12f),
-                        colors.panelHighest.copy(alpha = 0.82f),
-                        colors.panel
-                    )
-                )
-            )
-        ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
             Column(
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Two-layer halo: outer translucent ring + inner filled disc with the icon.
-                // The ring gives the icon a sense of presence/depth without resorting to a
-                // hard shadow that would conflict with the surrounding gradient surface.
-                Box(contentAlignment = Alignment.Center) {
-                    Surface(
-                        color = Color.Transparent,
-                        shape = CircleShape,
-                        border = BorderStroke(1.dp, tint.copy(alpha = 0.18f)),
-                        modifier = Modifier.size(80.dp)
-                    ) {}
-                    Surface(
-                        color = tint.copy(alpha = 0.16f),
-                        shape = CircleShape,
-                        border = BorderStroke(1.dp, tint.copy(alpha = 0.28f))
-                    ) {
-                        Box(
-                            modifier = Modifier.padding(18.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                icon,
-                                contentDescription = null,
-                                tint = tint,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
+                Surface(color = tint.copy(alpha = 0.12f), shape = RoundedCornerShape(Radius.lg)) {
+                    Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(24.dp))
                     }
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
-                Text(title, color = colors.text, style = MaterialTheme.typography.headlineMedium)
+                Text(title, color = colors.text, style = MaterialTheme.typography.headlineSmall)
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = body,
@@ -2327,7 +2294,7 @@ private fun ExportStateCard(
                         progress = { animatedProgress },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(10.dp)
+                            .height(6.dp)
                             .clip(RoundedCornerShape(Radius.sm))
                             .semantics {
                                 progressBarRangeInfo = ProgressBarRangeInfo(animatedProgress, 0f..1f)
@@ -2337,11 +2304,11 @@ private fun ExportStateCard(
                     )
                 }
                 if (progressLabel != null) {
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         progressLabel,
                         color = colors.text,
-                        style = MaterialTheme.typography.headlineMedium.copy(
+                        style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.SemiBold
                         )
                     )
