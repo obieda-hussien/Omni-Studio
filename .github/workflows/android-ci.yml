@@ -36,19 +36,13 @@ jobs:
           java-version: "17"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v4
+        uses: gradle/actions/wrapper-validation@v6
 
       - name: Unit tests
-        run: ./gradlew :app:testDebugUnitTest --write-verification-metadata sha256 --stacktrace
-
-      # Temporary bootstrap diagnostic: print only dependency-verification changes.
-      # This is removed once reviewed checksums are committed.
-      - name: Show dependency verification additions
-        if: always()
-        run: git diff -- gradle/verification-metadata.xml || true
+        run: ./gradlew :app:testQaUnitTest --stacktrace
 
       - name: Lint
         run: ./gradlew :app:lintDebug --stacktrace
@@ -58,7 +52,7 @@ jobs:
 
       - name: Upload reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: omni-studio-ci-reports
           if-no-files-found: ignore
@@ -67,7 +61,7 @@ jobs:
             app/build/test-results/**
 
       - name: Upload debug APKs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: omni-studio-debug-apks
           if-no-files-found: error
