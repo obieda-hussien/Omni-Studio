@@ -800,6 +800,9 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.window)
     implementation(libs.kotlinx.coroutines.android)
+    // OmniLink protocol DTOs expose JsonElement in the public API; consumers need the JSON runtime
+    // on their compile classpath rather than relying on OmniLink's implementation dependency.
+    implementation(libs.kotlinx.serialization.json)
 
     // Compose
     implementation(platform(libs.androidx.compose.bom))
