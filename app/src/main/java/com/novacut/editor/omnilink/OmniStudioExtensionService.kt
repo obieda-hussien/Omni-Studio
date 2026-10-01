@@ -30,18 +30,21 @@ class OmniStudioExtensionService : ExtensionService() {
     override val minSupportedVersion: Int = OmniLinkConstants.CURRENT_PROTOCOL_VERSION
     override val maxSupportedVersion: Int = OmniLinkConstants.CURRENT_PROTOCOL_VERSION
 
-    override val accessController: AccessController = AccessController { _, request ->
-        when (request.name) {
-            CAPABILITY_HEALTH -> AccessDecision.ALLOW
-            else -> AccessDecision.DENY
-        }
+    override val accessController: AccessController = object : AccessController {
+        override fun decide(caller: CallerContext, request: ActionRequest): AccessDecision =
+            when (request.name) {
+                CAPABILITY_HEALTH -> AccessDecision.ALLOW
+                else -> AccessDecision.DENY
+            }
     }
 
-    override val auditLogger: AuditLogger = AuditLogger { caller, request, result ->
-        Log.i(
-            TAG,
-            "caller=${caller.callingPackage} capability=${request.name} outcome=${result::class.simpleName}"
-        )
+    override val auditLogger: AuditLogger = object : AuditLogger {
+        override fun log(caller: CallerContext, request: ActionRequest, result: ActionOutcome) {
+            Log.i(
+                TAG,
+                "caller=${caller.callingPackage} capability=${request.name} outcome=${result::class.simpleName}"
+            )
+        }
     }
 
     override val capabilities: List<CapabilityDescriptor> = listOf(
