@@ -64,6 +64,11 @@ prepare -> validate -> diff -> preview -> confirm -> commit
 
 Large media is not serialized into Binder JSON. Future media exchange uses bounded references plus content-URI/file-descriptor or OmniLink large-payload/file-transfer mechanisms only when implemented end to end.
 
+## Workspace organization
+
+The editor uses a stable tool rail with adaptive action workbenches, a quieter preview,
+and focused settings destinations. See [workspace behavior and verification](docs/WORKSPACE_UX.md).
+
 ## Existing editor baseline
 
 The inherited editor already contains production editing systems that Omni Studio will adapt rather than rewrite blindly.

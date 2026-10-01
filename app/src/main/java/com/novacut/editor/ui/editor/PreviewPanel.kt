@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material.icons.filled.Compare
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.FullscreenExit
@@ -195,6 +196,7 @@ fun PreviewPanel(
     onToggleSplitPreview: () -> Unit = {},
     hasActiveEffects: Boolean = false
 ) {
+    var showPreviewTools by remember { mutableStateOf(false) }
     val semanticColors = LocalClearCutColors.current
     val canTransformPreview = selectedClipId != null && currentTimelineClip?.id == selectedClipId
     val showGapState = totalDurationMs > 0L && currentTimelineClip == null && !isPlaying
@@ -412,11 +414,11 @@ fun PreviewPanel(
                         }
 
                         if (totalDurationMs > 0 && !showGapState) {
-                            Column(
+                            Row(
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
                                     .padding(10.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 ClearCutChromeIconButton(
                                     icon = if (isFullscreenPreview) {
@@ -437,36 +439,44 @@ fun PreviewPanel(
                                     borderColor = semanticColors.cardStroke,
                                     shape = RoundedCornerShape(Radius.md),
                                 )
-                                if (showScopesButton) {
+                                Box {
                                     ClearCutChromeIconButton(
-                                        icon = Icons.Default.Insights,
-                                        contentDescription = stringResource(R.string.preview_scopes),
-                                        onClick = onToggleScopes,
-                                        tint = semanticColors.subtext.copy(alpha = 0.9f),
+                                        icon = Icons.Default.MoreHoriz,
+                                        contentDescription = stringResource(R.string.editor_more),
+                                        onClick = { showPreviewTools = true },
+                                        tint = semanticColors.text,
                                         containerColor = semanticColors.background.copy(alpha = 0.72f),
-                                        borderColor = semanticColors.cardStroke,
-                                        shape = RoundedCornerShape(Radius.md)
                                     )
-                                }
-                                ClearCutChromeIconButton(
-                                    icon = Icons.Default.GridOn,
-                                    contentDescription = stringResource(R.string.preview_composition_guides),
-                                    onClick = onToggleCompositionGuides,
-                                    tint = if (showCompositionGuides) ClearCutAccents.Sky else semanticColors.subtext.copy(alpha = 0.9f),
-                                    containerColor = if (showCompositionGuides) ClearCutAccents.Sky.copy(alpha = 0.22f) else semanticColors.background.copy(alpha = 0.72f),
-                                    borderColor = if (showCompositionGuides) ClearCutAccents.Sky.copy(alpha = 0.6f) else semanticColors.cardStroke,
-                                    shape = RoundedCornerShape(Radius.md),
-                                )
-                                if (hasActiveEffects) {
-                                    ClearCutChromeIconButton(
-                                        icon = Icons.Default.Compare,
-                                        contentDescription = stringResource(R.string.preview_compare),
-                                        onClick = onToggleSplitPreview,
-                                        tint = if (isSplitPreviewEnabled) ClearCutAccents.Teal else semanticColors.subtext.copy(alpha = 0.9f),
-                                        containerColor = if (isSplitPreviewEnabled) ClearCutAccents.Teal.copy(alpha = 0.3f) else semanticColors.background.copy(alpha = 0.72f),
-                                        borderColor = if (isSplitPreviewEnabled) ClearCutAccents.Teal.copy(alpha = 0.6f) else semanticColors.cardStroke,
-                                        shape = RoundedCornerShape(Radius.md),
-                                    )
+                                    DropdownMenu(
+                                        expanded = showPreviewTools,
+                                        onDismissRequest = { showPreviewTools = false },
+                                    ) {
+                                        if (showScopesButton) {
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.preview_scopes)) },
+                                                leadingIcon = { Icon(Icons.Default.Insights, contentDescription = null) },
+                                                onClick = { showPreviewTools = false; onToggleScopes() },
+                                            )
+                                        }
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.preview_composition_guides)) },
+                                            leadingIcon = {
+                                                Icon(Icons.Default.GridOn, contentDescription = null,
+                                                    tint = if (showCompositionGuides) semanticColors.accent else semanticColors.subtext)
+                                            },
+                                            onClick = { showPreviewTools = false; onToggleCompositionGuides() },
+                                        )
+                                        if (hasActiveEffects) {
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.preview_compare)) },
+                                                leadingIcon = {
+                                                    Icon(Icons.Default.Compare, contentDescription = null,
+                                                        tint = if (isSplitPreviewEnabled) semanticColors.accent else semanticColors.subtext)
+                                                },
+                                                onClick = { showPreviewTools = false; onToggleSplitPreview() },
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }

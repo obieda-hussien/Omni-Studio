@@ -27,6 +27,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items as gridItems
+import androidx.compose.animation.core.tween
+import com.novacut.editor.ui.theme.Motion
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
@@ -44,6 +49,7 @@ import com.novacut.editor.ui.theme.LocalClearCutColors
 import com.novacut.editor.ui.theme.Radius
 import com.novacut.editor.ui.theme.TouchTarget
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 // --- Tab & sub-menu data ---
 
@@ -201,6 +207,7 @@ private val projectToolsSubMenu = listOf(
 
 // --- Bottom tool area (tab bar + contextual sub-menu grids) ---
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomToolArea(
     selectedClipId: String?,
@@ -232,7 +239,6 @@ fun BottomToolArea(
 
     // Resolve sub-menu for the currently active tab
     val subMenuItems: List<SubMenuItem>? = when {
-        compactLocked -> null
         !isClipMode && activeTabId == "text" -> projectTextSubMenu
         !isClipMode && activeTabId == "project_tools" -> projectToolsSubMenu
         isClipMode && activeTabId == "edit" -> clipEditSubMenu
@@ -243,54 +249,64 @@ fun BottomToolArea(
         else -> null
     }
 
-    LaunchedEffect(subMenuItems != null, compactLocked) {
-        onExpandedChange(!compactLocked && subMenuItems != null)
-    }
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(max = if (compactLocked || subMenuItems == null) 64.dp else 126.dp)
-    ) {
-        // Sub-menu grid (slides up above tab bar)
-        if (!compactLocked) {
-            AnimatedVisibility(
-                visible = subMenuItems != null,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
-            ) {
-                subMenuItems?.let { items ->
-                    Column {
-                        SubMenuGrid(
-                            items = items,
-                            onItemSelected = { itemId ->
-                                onAction(itemId)
-                                activeTabId = null
-                            },
-                            disabledIds = buildSet {
-                                if (!hasCopiedEffects) add("paste_fx")
-                                if (!isClipMode) {
-                                    add("color_grade"); add("keyframes"); add("masks"); add("blend_mode")
-                                }
-                            }
-                        )
-                        // Text overlay list when text tab active
-                        if (!isClipMode && activeTabId == "text" && textOverlays.isNotEmpty()) {
-                            TextOverlayList(
-                                overlays = textOverlays,
-                                onEdit = onEditTextOverlay,
-                                onDelete = onDeleteTextOverlay
-                            )
-                        }
-                    }
-                }
+    // Tool workbenches are modal: opening one never resizes the timeline or preview.
+    LaunchedEffect(Unit) { onExpandedChange(false) }
+    val toolSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val toolSheetScope = rememberCoroutineScope()
+    var toolActionPending by remember { mutableStateOf(false) }
+    fun runToolAction(action: () -> Unit) {
+        if (toolActionPending) return
+        toolActionPending = true
+        toolSheetScope.launch {
+            try {
+                toolSheetState.hide()
+                activeTabId = null
+                action()
+            } finally {
+                toolActionPending = false
             }
         }
+    }
+    val sheetItems = subMenuItems
+    if (sheetItems != null) {
+        ModalBottomSheet(
+            onDismissRequest = { activeTabId = null },
+            sheetState = toolSheetState,
+            containerColor = LocalClearCutColors.current.panel,
+        ) {
+            val titleRes = tabs.firstOrNull { it.id == activeTabId }?.labelRes ?: R.string.editor_more
+            Text(
+                text = stringResource(titleRes),
+                style = MaterialTheme.typography.titleLarge,
+                color = LocalClearCutColors.current.text,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+            )
+            SubMenuGrid(
+                items = sheetItems,
+                onItemSelected = { itemId -> runToolAction { onAction(itemId) } },
+                disabledIds = buildSet {
+                    if (!hasCopiedEffects) add("paste_fx")
+                    if (!isClipMode) {
+                        add("color_grade"); add("keyframes"); add("masks"); add("blend_mode")
+                    }
+                },
+            )
+            if (!isClipMode && activeTabId == "text" && textOverlays.isNotEmpty()) {
+                TextOverlayList(
+                    overlays = textOverlays,
+                    onEdit = { id -> runToolAction { onEditTextOverlay(id) } },
+                    onDelete = { id -> runToolAction { onDeleteTextOverlay(id) } },
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+        }
+    }
 
+    Column(modifier = modifier.fillMaxWidth().heightIn(max = 64.dp)) {
         // Tab bar
         BottomTabBar(
             tabs = tabs,
-            activeTabId = activeTabId ?: "edit",
+            activeTabId = activeTabId,
             onTabTapped = { tabId ->
                 when (tabId) {
                     "back" -> {
@@ -476,20 +492,23 @@ private fun BottomTabBarItem(
     val itemDescription = if (isBack) stringResource(R.string.back) else tabLabel
     val itemShape = RoundedCornerShape(Radius.xs)
     val iconSize = if (compact) 19.dp else 20.dp
-    val labelSlotHeight = 15.dp
-    val itemHeight = if (compact) 50.dp else 54.dp
+    val labelSlotHeight = 26.dp
+    val itemHeight = 58.dp
     val itemBorderColor by animateColorAsState(
         targetValue = when {
             isBack -> semanticColors.cardStroke.copy(alpha = 0.38f)
             else -> Color.Transparent
         },
+        animationSpec = tween(Motion.DurationFast),
         label = "toolTabItemBorder"
     )
     val itemContainerColor by animateColorAsState(
         targetValue = when {
             isBack -> semanticColors.panelRaised.copy(alpha = 0.42f)
+            isActive -> colors.accent.copy(alpha = 0.12f)
             else -> Color.Transparent
         },
+        animationSpec = tween(Motion.DurationFast),
         label = "toolTabItemContainer"
     )
     val iconTint by animateColorAsState(
@@ -498,10 +517,12 @@ private fun BottomTabBarItem(
             isBack -> semanticColors.text
             else -> semanticColors.subtext
         },
+        animationSpec = tween(Motion.DurationFast),
         label = "toolTabIconTint"
     )
     val labelColor by animateColorAsState(
         targetValue = if (isActive && !isBack) colors.accent else semanticColors.subtext,
+        animationSpec = tween(Motion.DurationFast),
         label = "toolTabLabelColor"
     )
 
@@ -570,58 +591,42 @@ private fun SubMenuGrid(
     modifier: Modifier = Modifier,
     disabledIds: Set<String> = emptySet()
 ) {
-    val semanticColors = LocalClearCutColors.current
-    Surface(
-        color = semanticColors.panel,
-        shape = RoundedCornerShape(topStart = Radius.sm, topEnd = Radius.sm),
-        border = BorderStroke(1.dp, semanticColors.cardStroke.copy(alpha = 0.72f)),
-        modifier = modifier.fillMaxWidth()
+    val colors = LocalClearCutColors.current
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 96.dp),
+        modifier = modifier.fillMaxWidth().heightIn(max = 380.dp)
+            .testTag(ClearCutTestTags.EDITOR_TOOL_ACTION_LIST),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        LazyRow(
-            modifier = Modifier
-                .testTag(ClearCutTestTags.EDITOR_TOOL_ACTION_LIST)
-                .height(62.dp),
-            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 5.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            items(items, key = { it.id }) { item ->
-                val isDisabled = item.id in disabledIds
-                val itemLabel = stringResource(item.labelRes)
-                val itemAccent = if (isDisabled) semanticColors.overlay else LocalClearCutColors.current.accent
-                Column(
-                    modifier = Modifier
-                        .width(72.dp)
-                        .fillMaxHeight()
-                        .clip(RoundedCornerShape(Radius.xs))
-                        .clickable(enabled = !isDisabled) { onItemSelected(item.id) }
-                        .testTag(ClearCutTestTags.EDITOR_TOOL_ACTION_PREFIX + item.id)
-                        .semantics {
-                            contentDescription = itemLabel
-                            if (isDisabled) disabled()
-                        }
-                        .background(if (isDisabled) Color.Transparent else itemAccent.copy(alpha = 0.08f))
-                        .alpha(if (isDisabled) 0.42f else 1f)
-                        .padding(horizontal = 4.dp, vertical = 3.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        item.icon,
-                        contentDescription = null,
-                        tint = if (isDisabled) semanticColors.subtext else itemAccent,
-                        modifier = Modifier.size(19.dp)
-                    )
-                    Spacer(modifier = Modifier.height(3.dp))
-                    Text(
-                        text = itemLabel,
-                        fontSize = 10.sp,
-                        color = semanticColors.subtext,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                        lineHeight = 11.sp,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+        gridItems(items, key = { it.id }) { item ->
+            val isDisabled = item.id in disabledIds
+            val itemLabel = stringResource(item.labelRes)
+            Column(
+                modifier = Modifier.fillMaxWidth().heightIn(min = 84.dp)
+                    .clip(RoundedCornerShape(Radius.lg))
+                    .background(colors.panelHighest)
+                    .clickable(enabled = !isDisabled, role = Role.Button) { onItemSelected(item.id) }
+                    .testTag(ClearCutTestTags.EDITOR_TOOL_ACTION_PREFIX + item.id)
+                    .semantics {
+                        contentDescription = itemLabel
+                        if (isDisabled) disabled()
+                    }
+                    .alpha(if (isDisabled) 0.45f else 1f)
+                    .padding(horizontal = 8.dp, vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+            ) {
+                Icon(item.icon, contentDescription = null, tint = colors.accent, modifier = Modifier.size(24.dp))
+                Text(
+                    text = itemLabel,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.text,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }

@@ -1,6 +1,9 @@
 package com.novacut.editor
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertDoesNotExist
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -30,6 +33,31 @@ class ClearCutSmokeTest {
     @Before
     fun waitForInitialComposeHierarchy() {
         compose.waitForComposeHierarchy()
+    }
+
+    @Test
+    fun settingsCategoriesKeepUnrelatedControlsOutOfTheCurrentDestination() {
+        compose.onNodeWithTag(ClearCutTestTags.PROJECTS_SETTINGS).performClick()
+        compose.onNodeWithTag("settings_category_editor").performClick()
+        compose.onNodeWithText(compose.activity.getString(R.string.settings_timeline)).assertExists()
+        compose.onNodeWithText(compose.activity.getString(R.string.settings_export_defaults)).assertDoesNotExist()
+
+        compose.onNodeWithTag("settings_category_export").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("settings_category_export").assertIsSelected()
+        compose.onNodeWithText(compose.activity.getString(R.string.settings_export_defaults)).assertExists()
+        compose.onNodeWithText(compose.activity.getString(R.string.settings_timeline)).assertDoesNotExist()
+
+        compose.onNodeWithTag("settings_category_storage").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText(compose.activity.getString(R.string.settings_project_storage_title)).assertExists()
+        compose.onNodeWithText(compose.activity.getString(R.string.settings_export_defaults)).assertDoesNotExist()
+
+        compose.onNodeWithTag("settings_category_app").performClick()
+        compose.onNodeWithTag(ClearCutTestTags.SETTINGS_PRIVACY_OPEN).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("settings_category_editor").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag(ClearCutTestTags.SETTINGS_PRIVACY_OPEN).assertDoesNotExist()
     }
 
     @Test
@@ -69,6 +97,7 @@ class ClearCutSmokeTest {
 
         compose.onNodeWithTag(ClearCutTestTags.PROJECTS_SETTINGS).performClick()
         compose.onNodeWithTag(ClearCutTestTags.SETTINGS_SCREEN).assertIsDisplayed()
+        compose.onNodeWithTag("settings_category_app").performClick()
         compose.assertAccessibilityChecksPass()
         compose.onNodeWithTag(ClearCutTestTags.SETTINGS_PRIVACY_OPEN)
             .performScrollTo()

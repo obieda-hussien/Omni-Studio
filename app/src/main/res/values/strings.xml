@@ -3636,4 +3636,10 @@
     <string name="ai_requirement_unmet_generic">%1$s is not ready yet, so this tool cannot run.</string>
     <string name="ai_requirement_unknown_tool_title">This tool needs something that is not listed</string>
     <string name="ai_requirement_unknown_tool_body">Omni Studio has no requirement entry for this tool, so it cannot say what is missing. Open AI Tools to see which models are installed.</string>
+
+    <!-- Focused settings destinations -->
+    <string name="settings_category_editor">Editor</string>
+    <string name="settings_category_export">Export</string>
+    <string name="settings_category_storage">Storage</string>
+    <string name="settings_category_app">App</string>
 </resources>

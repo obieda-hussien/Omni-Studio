@@ -50,12 +50,12 @@ internal fun TimelineToolbarButton(
     val backgroundColor = when {
         !enabled -> colors.panelHighest.copy(alpha = 0.35f)
         highlight -> actionAccent.copy(alpha = 0.16f)
-        else -> colors.panelHighest
+        else -> Color.Transparent
     }
     val borderColor = when {
         !enabled -> colors.cardStroke.copy(alpha = 0.35f)
         highlight -> actionAccent.copy(alpha = 0.58f)
-        else -> if (colors.highContrast) colors.cardStrokeStrong else colors.cardStroke
+        else -> if (colors.highContrast) colors.cardStrokeStrong else Color.Transparent
     }
     val iconTint = when {
         !enabled -> colors.text.copy(alpha = 0.4f)

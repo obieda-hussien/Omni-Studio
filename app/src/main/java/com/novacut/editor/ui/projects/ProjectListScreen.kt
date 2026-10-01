@@ -644,6 +644,7 @@ private fun ProjectHomeHero(
     showSortControls: Boolean,
     actionsEnabled: Boolean
 ) {
+    var showSortMenu by remember { mutableStateOf(false) }
     val maximumHeight = (LocalConfiguration.current.screenHeightDp * 0.62f)
         .coerceAtLeast(320f)
         .dp
@@ -654,7 +655,7 @@ private fun ProjectHomeHero(
             .verticalScroll(rememberScrollState())
             .background(LocalClearCutColors.current.background)
             .padding(horizontal = Spacing.lg, vertical = Spacing.lg),
-        verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+        verticalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -688,13 +689,15 @@ private fun ProjectHomeHero(
             Text(
                 text = stringResource(R.string.projects_ready_title),
                 color = LocalClearCutColors.current.text,
-                style = MaterialTheme.typography.displayLarge,
+                style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = stringResource(R.string.projects_ready_body),
                 color = LocalClearCutColors.current.subtext,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.widthIn(max = 520.dp)
             )
         }
@@ -758,15 +761,22 @@ private fun ProjectHomeHero(
         }
 
         if (showSortControls) {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                items(SortMode.entries.toList()) { mode ->
-                    ClearCutFilterChip(
-                        onClick = { onSortModeChanged(mode) },
-                        text = mode.localizedLabel(),
-                        selected = sortMode == mode,
-                        accent = ClearCutAccents.Rosewater,
-                        icon = if (sortMode == mode) Icons.Default.Check else null
-                    )
+            Box {
+                ClearCutSecondaryButton(
+                    text = sortMode.localizedLabel(),
+                    icon = Icons.Default.Sort,
+                    onClick = { showSortMenu = true },
+                )
+                DropdownMenu(expanded = showSortMenu, onDismissRequest = { showSortMenu = false }) {
+                    SortMode.entries.forEach { mode ->
+                        DropdownMenuItem(
+                            text = { Text(mode.localizedLabel()) },
+                            leadingIcon = if (mode == sortMode) {
+                                { Icon(Icons.Default.Check, contentDescription = null) }
+                            } else null,
+                            onClick = { onSortModeChanged(mode); showSortMenu = false },
+                        )
+                    }
                 }
             }
         }

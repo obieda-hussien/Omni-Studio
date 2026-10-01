@@ -8,6 +8,13 @@ import android.provider.OpenableColumns
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import com.novacut.editor.ui.theme.Motion
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -152,10 +159,25 @@ class MainActivity : ComponentActivity() {
                     pendingEditorOpen = null
                 }
 
+                val navigationDirection = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1 else 1
                 CompositionLocalProvider(LocalTabletopPosture provides isTabletopPosture) {
                     NavHost(
                         navController = navController,
                         startDestination = "projects",
+                        enterTransition = {
+                            fadeIn(tween(Motion.DurationStandard)) + slideInHorizontally(
+                                animationSpec = tween(Motion.DurationMedium, easing = Motion.EmphasizedEasing),
+                                initialOffsetX = { navigationDirection * it / 12 },
+                            )
+                        },
+                        exitTransition = { fadeOut(tween(Motion.DurationFast)) },
+                        popEnterTransition = {
+                            fadeIn(tween(Motion.DurationStandard)) + slideInHorizontally(
+                                animationSpec = tween(Motion.DurationMedium, easing = Motion.EmphasizedEasing),
+                                initialOffsetX = { -navigationDirection * it / 12 },
+                            )
+                        },
+                        popExitTransition = { fadeOut(tween(Motion.DurationFast)) },
                         modifier = rootModifier
                     ) {
                         composable("projects") {
