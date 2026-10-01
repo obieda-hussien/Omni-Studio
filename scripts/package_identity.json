@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "publicProductName": "ClearCut",
-  "retiredPublicProductName": "NovaCut",
+  "publicProductName": "Omni Studio",
+  "retiredPublicProductName": "ClearCut",
   "applicationId": "com.novacut.editor",
   "namespace": "com.novacut.editor",
   "sourcePackage": "com.novacut.editor",
@@ -58,5 +58,9 @@
     "### Package identity and upgrade policy",
     "`com.novacut.editor`",
     "new install with an explicit export/import path"
+  ],
+  "historicalPublicProductNames": [
+    "ClearCut",
+    "NovaCut"
   ]
 }

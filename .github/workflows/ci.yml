@@ -1,0 +1,96 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify release build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x gradlew
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
+      # Temporary maintenance bootstrap. The generated snapshot is reviewed and committed,
+      # then this step is removed so normal CI stays fully offline/deterministic.
+      - name: Refresh dependency freshness evidence
+        run: python scripts/refresh_dependency_freshness.py --reviewed-on 2026-10-01
+
+      - name: Unit tests
+        run: ./gradlew :app:testQaUnitTest --stacktrace
+
+      - name: Show dependency freshness diff
+        if: always()
+        run: git diff -- scripts/dependency_freshness_snapshot.json || true
+
+      - name: Lint release
+        run: ./gradlew :app:lintRelease -Pomni.ciUnsignedRelease=true --stacktrace
+
+      - name: Assemble optimized release APKs
+        run: ./gradlew :app:assembleRelease -Pomni.ciUnsignedRelease=true --stacktrace
+
+      - name: Build release app bundle
+        run: ./gradlew :app:bundleRelease -Pomni.ciUnsignedRelease=true --stacktrace
+
+      - name: Write CI release notice
+        run: |
+          mkdir -p app/build/outputs/ci-release
+          cat > app/build/outputs/ci-release/README.txt <<'EOF'
+          Omni Studio CI release artifacts
+          =================================
+
+          These are minified/shrunk Android RELEASE builds.
+          They are intentionally unsigned when the repository's pinned production keystore is not available in CI.
+          Sign them with the approved Omni Studio/legacy-lineage release key before installation or distribution.
+          CI never falls back to the Android debug signing key.
+          EOF
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: omni-studio-ci-reports
+          if-no-files-found: ignore
+          path: |
+            app/build/reports/**
+            app/build/test-results/**
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: omni-studio-release-unsigned
+          if-no-files-found: error
+          path: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
+            app/build/outputs/ci-release/README.txt

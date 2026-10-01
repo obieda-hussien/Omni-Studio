@@ -3,6 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- OmniLink first-party privileges. OmniDev owns/defines these signature permissions;
+         Omni Studio requests both because it is an extension provider/caller and an Agent Gateway client. -->
+    <uses-permission android:name="com.omnilink.sdk.permission.BIND_EXTENSION" />
+    <uses-permission android:name="com.omnilink.sdk.permission.BIND_AGENT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING" />
     <!-- mediaProcessing is API 35+; Android 14 (API 34) requires a type it
@@ -15,6 +19,16 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Android 11+ package visibility for OmniLink semantic service discovery. -->
+    <queries>
+        <intent>
+            <action android:name="com.omnilink.sdk.action.EXTENSION_BIND" />
+        </intent>
+        <intent>
+            <action android:name="com.omnilink.sdk.action.AGENT_GATEWAY_BIND" />
+        </intent>
+    </queries>
+
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:glEsVersion="0x00030000" android:required="true" />
 
@@ -199,6 +213,15 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <service
+            android:name=".omnilink.OmniStudioExtensionService"
+            android:exported="true"
+            android:permission="com.omnilink.sdk.permission.BIND_EXTENSION">
+            <intent-filter>
+                <action android:name="com.omnilink.sdk.action.EXTENSION_BIND" />
+            </intent-filter>
+        </service>
 
     </application>
 </manifest>

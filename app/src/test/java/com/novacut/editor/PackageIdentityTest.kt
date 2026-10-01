@@ -18,6 +18,7 @@ class PackageIdentityTest {
         val readme = locate("README.md").readText()
 
         assertEquals(1, registry.getInt("schemaVersion"))
+        assertEquals("Omni Studio", registry.getString("publicProductName"))
         assertEquals(applicationId, namespace)
         assertTrue(build.contains("namespace = \"$namespace\""))
         assertTrue(build.contains("applicationId = \"$applicationId\""))
@@ -61,10 +62,16 @@ class PackageIdentityTest {
         }
 
         assertTrue(locate("app/src/main/res/values/strings.xml").readText().contains(
-            "<string name=\"app_name\">ClearCut</string>"
+            "<string name=\"app_name\">Omni Studio</string>"
         ))
         assertTrue(locate("app/src/main/res/values-es/strings.xml").readText().contains(
-            "<string name=\"app_name\">ClearCut</string>"
+            "<string name=\"app_name\">Omni Studio</string>"
+        ))
+        assertTrue(locate("app/src/main/res/values/strings.xml").readText().contains(
+            "<string name=\"projects_app_title\">Omni Studio</string>"
+        ))
+        assertTrue(locate("app/src/main/res/values-es/strings.xml").readText().contains(
+            "<string name=\"projects_app_title\">Omni Studio</string>"
         ))
     }
 

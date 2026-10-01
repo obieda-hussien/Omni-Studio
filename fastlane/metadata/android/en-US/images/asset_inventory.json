@@ -1,12 +1,12 @@
 {
   "assets": [
     {
-      "altText": "ClearCut app icon",
-      "caption": "High-resolution Play Store icon.",
+      "altText": "Omni Studio ribbon on the scalloped Omni family badge",
+      "caption": "A lavender-to-orchid Studio ribbon on the dark eight-lobe Omni badge.",
       "height": 512,
       "path": "icon.png",
       "source": "_source/icon.svg",
-      "sourceSha256": "dc7f4a927479090525e3041e13ee826165a16e1f108371aa76a85fb074a06e3c",
+      "sourceSha256": "e2e5443845524504ada948d488d8a1d660e73519d4e527496c90721169cf9cdb",
       "sourceType": "generated-svg",
       "width": 512
     },
@@ -110,5 +110,5 @@
     }
   ],
   "schema": "com.clearcut.play-listing-assets.v1",
-  "updated": "2026-08-11"
+  "updated": "2026-10-01"
 }

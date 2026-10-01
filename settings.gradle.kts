@@ -17,9 +17,13 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url = uri("https://jitpack.io")
+            content { includeGroup("com.github.obieda-hussien.OmniLinkSDK") }
+        }
     }
 }
 
-rootProject.name = "ClearCut"
+rootProject.name = "OmniStudio"
 include(":app")
 include(":baselineprofile")
