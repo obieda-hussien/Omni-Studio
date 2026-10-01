@@ -86,6 +86,7 @@ class TrackedFilesAuditTest {
             "docs/play-data-safety.md",
             "docs/translations.md",
             "docs/ARCHITECTURE.md",
+            "docs/BRANDING.md",
             "docs/ROADMAP.md",
         )
         val trackedPrivateMarkdown = tracked.filter { path ->
