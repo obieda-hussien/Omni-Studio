@@ -39,7 +39,7 @@ The long-term goal is **Omni Studio — Agent-Native Creative Suite**: video fir
 - OmniLink 3 first-party integration foundation.
 - Signature-protected `OmniStudioExtensionService`.
 - Minimal read-only `studio.health` capability.
-- CI for unit tests, lint and debug assembly.
+- CI for unit tests, release lint, optimized release APK assembly, release AAB generation and artifact upload.
 
 ## OmniLink 3
 
