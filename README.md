@@ -43,7 +43,7 @@ The long-term goal is **Omni Studio — Agent-Native Creative Suite**: video fir
 
 ## OmniLink 3
 
-Omni Studio is a first-party Omni capability provider. Same-device privileged integration uses OmniLink's Android Binder surface protected by `com.omnilink.sdk.permission.BIND_EXTENSION`.
+Omni Studio is a first-party Omni capability provider and Agent Gateway client. Same-device privileged integration uses OmniLink's Android Binder surface, requests both `BIND_EXTENSION` and `BIND_AGENT`, protects its exported extension with `BIND_EXTENSION`, and advertises Android 11+ package visibility for both OmniLink service actions.
 
 | Capability | Mode | Risk | Purpose |
 |---|---|---:|---|
@@ -195,7 +195,7 @@ Requirements:
 ./gradlew :app:assembleDebug
 ```
 
-Hosted CI intentionally avoids signed release builds. Release signing remains a separate process because the inherited project enforces a pinned certificate lineage.
+Hosted CI builds the optimized/minified **release** APKs and AAB. When the pinned production keystore is not available, CI intentionally emits unsigned release artifacts instead of silently using a debug key. Distribution/signing remains a separate controlled step because the inherited package lineage enforces a pinned certificate.
 
 ### Package identity and upgrade policy
 
@@ -228,7 +228,7 @@ The generated open-source notice inventory covers redistributable open-source ru
 | SAM 2.1 ONNX | Targeted | Future tracked-mask path; MobileSAM fallback (target) |
 <!-- capability-registry:dependencies:end -->
 
-OmniLink 3 is pinned to an immutable v3 source revision until the `v3.0.0` JitPack publication is independently verified. Importing the dependency never grants trust; first-party Binder access still depends on signing identity and app policy.
+Omni Studio consumes the official `OmniLinkSDK v3.0.0` release (`com.github.obieda-hussien.OmniLinkSDK:omni-link-sdk:v3.0.0`). The release tag resolves to the reviewed 3.0.0 source commit and CI pins the resulting JitPack artifacts through Gradle dependency verification. Importing the dependency never grants trust; first-party Binder access still depends on the shared signing identity, signature permissions and app policy.
 
 ## Security model
 
