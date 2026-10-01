@@ -333,7 +333,9 @@ fun ProjectListScreen(
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    if (ProjectListTrashVisibilityPolicy.showsInlineEmptyState(projects.size, trashed.size)) {
+                    if ((hasActiveSearch || hasActiveFilter) &&
+                        ProjectListTrashVisibilityPolicy.showsInlineEmptyState(projects.size, trashed.size)
+                    ) {
                         item(key = "__empty_state") {
                             ProjectEmptyState(
                                 projectTotalCount = projectTotalCount,
@@ -344,7 +346,8 @@ fun ProjectListScreen(
                                     viewModel.setSearchQuery("")
                                     viewModel.setFilterMode(ProjectFilterMode.ALL)
                                 },
-                                actionsEnabled = actionsEnabled
+                                actionsEnabled = actionsEnabled,
+                                scrollable = false,
                             )
                         }
                     }
@@ -1014,7 +1017,8 @@ private fun ProjectEmptyState(
     filterMode: ProjectFilterMode,
     onCreateProject: () -> Unit,
     onShowAllProjects: () -> Unit,
-    actionsEnabled: Boolean
+    actionsEnabled: Boolean,
+    scrollable: Boolean = true,
 ) {
     val hasAnyProjects = projectTotalCount > 0
     val hasActiveSearch = searchQuery.isNotBlank()
@@ -1042,7 +1046,7 @@ private fun ProjectEmptyState(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
+                .then(if (scrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier)
                 .padding(bottom = Spacing.lg),
             verticalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
