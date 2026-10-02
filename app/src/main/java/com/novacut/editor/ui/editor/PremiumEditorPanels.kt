@@ -40,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import com.novacut.editor.R
 import com.novacut.editor.ui.theme.ClearCutChromeIconButton
 import com.novacut.editor.ui.theme.LocalClearCutColors
+import com.novacut.editor.ui.theme.Motion
+import androidx.compose.animation.core.tween
 import com.novacut.editor.ui.theme.Radius
 import com.novacut.editor.ui.theme.Spacing
 
@@ -72,22 +74,8 @@ fun PremiumEditorPanel(
                 RoundedCornerShape(topStart = Radius.xxl, topEnd = Radius.xxl)
             )
             .semantics { paneTitle = title }
-            .then(scrollModifier)
             .padding(horizontal = Spacing.lg, vertical = 14.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .width(36.dp)
-                .height(3.dp)
-                .background(
-                    colors.cardStrokeStrong.copy(alpha = if (colors.highContrast) 0.55f else 0.28f),
-                    RoundedCornerShape(Radius.sm)
-                )
-        )
-
-        Spacer(modifier = Modifier.height(14.dp))
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -119,7 +107,7 @@ fun PremiumEditorPanel(
                 Text(
                     text = title,
                     color = colors.text,
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -139,8 +127,10 @@ fun PremiumEditorPanel(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        content()
+        Spacer(modifier = Modifier.height(Spacing.md))
+        Column(modifier = Modifier.weight(1f, fill = false).then(scrollModifier)) {
+            content()
+        }
     }
 }
 
@@ -155,31 +145,19 @@ fun PremiumPanelCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .animateContentSize(),
+            .animateContentSize(animationSpec = tween(Motion.DurationStandard, easing = Motion.EmphasizedEasing)),
         color = colors.panelHighest,
         shape = RoundedCornerShape(Radius.lg),
         border = BorderStroke(
             1.dp,
-            if (colors.highContrast) colors.cardStrokeStrong else colors.cardStrokeStrong.copy(alpha = 0.86f)
+            if (colors.highContrast) colors.cardStrokeStrong else colors.cardStroke.copy(alpha = 0.65f)
         )
     ) {
-        Box(
-            modifier = Modifier.background(
-                Brush.verticalGradient(
-                    colorStops = arrayOf(
-                        0f to accent.copy(alpha = if (colors.highContrast) 0.16f else 0.10f),
-                        0.54f to colors.panelHighest,
-                        1f to colors.panelRaised.copy(alpha = 0.96f)
-                    )
-                )
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(Spacing.lg),
-                verticalArrangement = Arrangement.spacedBy(Spacing.md),
-                content = content
-            )
-        }
+        Column(
+            modifier = Modifier.padding(Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md),
+            content = content
+        )
     }
 }
 

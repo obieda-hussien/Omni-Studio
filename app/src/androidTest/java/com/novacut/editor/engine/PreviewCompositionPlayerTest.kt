@@ -38,6 +38,80 @@ import java.util.concurrent.atomic.AtomicReference
 @androidx.annotation.OptIn(ExperimentalApi::class)
 class PreviewCompositionPlayerTest {
     @Test
+    fun bFrameVideoAndAudioAdvanceAfterScrubAndSeek() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val context = instrumentation.targetContext
+        val source = File(context.cacheDir, "preview-bframes-audio.mp4")
+        instrumentation.context.assets.open(source.name).use { input ->
+            source.outputStream().use(input::copyTo)
+        }
+        val frames = CountDownLatch(1)
+        val mainHandler = Handler(android.os.Looper.getMainLooper())
+        val ready = CountDownLatch(1)
+        val failure = AtomicReference<PlaybackException?>()
+        val playerRef = AtomicReference<CompositionPlayer>()
+        val thread = HandlerThread("bframe-preview").apply { start() }
+        val reader = ImageReader.newInstance(96, 64, PixelFormat.RGBA_8888, 3)
+        reader.setOnImageAvailableListener({ images ->
+            images.acquireLatestImage()?.use { frames.countDown() }
+        }, Handler(thread.looper))
+        try {
+            instrumentation.runOnMainSync {
+                val player = createPreviewCompositionPlayer(context, multipleVisualInputs = false)
+                playerRef.set(player)
+                player.addListener(object : Player.Listener {
+                    override fun onPlaybackStateChanged(state: Int) {
+                        if (state == Player.STATE_READY) ready.countDown()
+                    }
+                    override fun onPlayerError(error: PlaybackException) {
+                        failure.set(error)
+                        ready.countDown()
+                    }
+                })
+                player.setVideoSurface(reader.surface, Size(96, 64))
+                val item = EditedMediaItem.Builder(MediaItem.fromUri(Uri.fromFile(source)))
+                    .setDurationUs(4_000_000L).build()
+                val sequence = EditedMediaItemSequence.Builder(setOf(C.TRACK_TYPE_VIDEO, C.TRACK_TYPE_AUDIO))
+                    .addItem(item).build()
+                player.setComposition(Composition.Builder(listOf(sequence)).build())
+                player.prepare()
+            }
+            assertTrue("preview did not prepare", ready.await(15, TimeUnit.SECONDS))
+            assertNull(failure.get())
+            instrumentation.runOnMainSync {
+                playerRef.get().setScrubbingModeEnabled(true)
+                playerRef.get().seekTo(500L)
+                playerRef.get().setScrubbingModeEnabled(false)
+                playerRef.get().play()
+            }
+            assertTrue("preview rendered no video", frames.await(10, TimeUnit.SECONDS))
+            val advanced = CountDownLatch(1)
+            val deadline = android.os.SystemClock.elapsedRealtime() + 5_000L
+            val poll = object : Runnable {
+                override fun run() {
+                    if (playerRef.get().currentPosition >= 1_000L || failure.get() != null) {
+                        advanced.countDown()
+                    } else if (android.os.SystemClock.elapsedRealtime() < deadline) {
+                        mainHandler.postDelayed(this, 50L)
+                    } else advanced.countDown()
+                }
+            }
+            mainHandler.post(poll)
+            assertTrue(advanced.await(6, TimeUnit.SECONDS))
+            instrumentation.runOnMainSync {
+                assertTrue("preview clock stayed frozen", playerRef.get().currentPosition >= 1_000L)
+            }
+            assertNull(failure.get())
+        } finally {
+            mainHandler.removeCallbacksAndMessages(null)
+            instrumentation.runOnMainSync { playerRef.get()?.release() }
+            reader.close()
+            thread.quitSafely()
+            source.delete()
+        }
+    }
+
+    @Test
     fun trimmedAndExtendedCompositionsDecodeTheirBoundaryFrames() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext

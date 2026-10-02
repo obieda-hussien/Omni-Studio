@@ -40,7 +40,7 @@ object Mocha {
     val Subtext0 = Color(0xFF87919F)
     val Subtext1 = Color(0xFFAFB7C3)
     val Text = Color(0xFFF4F7FA)
-    val Lavender = Color(0xFFB4BEFE)
+    val Lavender = Color(0xFF8E8DE5)
     val Blue = Color(0xFF89B4FA)
     val Sapphire = Color(0xFF52C8F0)
     val Sky = Color(0xFF35D5E8)
@@ -81,10 +81,10 @@ object ClearCutAccents {
 }
 
 private val ClearCutDarkColorScheme = darkColorScheme(
-    primary = Mocha.Sky,
+    primary = Mocha.Lavender,
     onPrimary = Mocha.Crust,
-    primaryContainer = Mocha.Sky.copy(alpha = 0.18f),
-    onPrimaryContainer = Mocha.Sky,
+    primaryContainer = Mocha.Lavender.copy(alpha = 0.18f),
+    onPrimaryContainer = Mocha.Lavender,
     secondary = Mocha.Peach,
     onSecondary = Mocha.Crust,
     secondaryContainer = Mocha.Peach.copy(alpha = 0.16f),
@@ -118,9 +118,9 @@ private val ClearCutDarkColorScheme = darkColorScheme(
 )
 
 private val ClearCutHighContrastColorScheme = darkColorScheme(
-    primary = Mocha.Sky,
+    primary = Mocha.Lavender,
     onPrimary = Mocha.Crust,
-    primaryContainer = Mocha.Sky,
+    primaryContainer = Mocha.Lavender,
     onPrimaryContainer = Mocha.Crust,
     secondary = Mocha.Green,
     onSecondary = Mocha.Crust,
@@ -218,14 +218,14 @@ object ClearCutThemeDefaults {
             subtext = Color(0xFFF4F7FF),
             subtextStrong = Color(0xFFFFFFFF),
             disabledText = Color(0xFFBAC2DE),
-            accent = Mocha.Sky,
+            accent = Mocha.Lavender,
             accentSecondary = Mocha.Peach,
             success = Mocha.Green,
             warning = Mocha.Peach,
             danger = Mocha.Red,
             focusRing = Color(0xFFFFFFFF),
             canvas = Color(0xFF000000),
-            selectedSurface = Mocha.Sky,
+            selectedSurface = Mocha.Lavender,
             disabledSurface = Color(0xFF111827),
             surfaceBase = Color(0xFF0C111D),
             surfaceLow = Color(0xFF172033),
@@ -249,14 +249,14 @@ object ClearCutThemeDefaults {
             subtext = Mocha.Subtext0,
             subtextStrong = Mocha.Subtext1,
             disabledText = Mocha.Subtext0,
-            accent = Mocha.Sky,
+            accent = Mocha.Lavender,
             accentSecondary = Mocha.Peach,
             success = Mocha.Green,
             warning = Mocha.Peach,
             danger = Mocha.Red,
-            focusRing = Mocha.Sky,
+            focusRing = Mocha.Lavender,
             canvas = Color(0xFF000000),
-            selectedSurface = Mocha.Sky.copy(alpha = 0.14f),
+            selectedSurface = Mocha.Lavender.copy(alpha = 0.14f),
             disabledSurface = Mocha.PanelHighest.copy(alpha = 0.48f),
             surfaceBase = Mocha.Base,
             surfaceLow = Mocha.Surface0,

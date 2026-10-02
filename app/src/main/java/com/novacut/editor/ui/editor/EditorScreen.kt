@@ -1565,14 +1565,8 @@ private fun EditorTopBar(
             LayoutMode.DESKTOP -> maxWidth < 600.dp
             LayoutMode.PHONE -> maxWidth < 430.dp
         }
-        val toolbarTouchTarget = if (layoutMode == LayoutMode.DESKTOP) 68.dp else {
-            TouchTarget.minimum
-        }
-        val toolbarHeight = if (layoutMode == LayoutMode.DESKTOP) 68.dp else if (isCompactBar) {
-            64.dp
-        } else {
-            68.dp
-        }
+        val toolbarTouchTarget = TouchTarget.minimum
+        val toolbarHeight = 56.dp
 
         Surface(
             color = semanticColors.background,
@@ -1598,7 +1592,7 @@ private fun EditorTopBar(
                     IconButton(
                         onClick = onBack,
                         modifier = Modifier
-                            .size(if (layoutMode == LayoutMode.DESKTOP) 68.dp else if (isCompactBar) 60.dp else 68.dp)
+                            .size(TouchTarget.minimum)
                             .testTag(ClearCutTestTags.EDITOR_BACK)
                     ) {
                         Icon(
@@ -1979,13 +1973,13 @@ private fun EditorTopBar(
                 Button(
                     onClick = onExport,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ClearCutAccents.Sky,
-                        contentColor = semanticColors.background
+                        containerColor = semanticColors.accent,
+                        contentColor = semanticColors.onAccent
                     ),
                     shape = RoundedCornerShape(Radius.md),
                     contentPadding = PaddingValues(horizontal = if (isCompactBar) 12.dp else 14.dp, vertical = 0.dp),
                     modifier = Modifier
-                        .height(if (layoutMode == LayoutMode.DESKTOP) 68.dp else if (isCompactBar) 60.dp else TouchTarget.minimum)
+                        .height(TouchTarget.minimum)
                         .testTag(ClearCutTestTags.EDITOR_EXPORT)
                 ) {
                     Icon(

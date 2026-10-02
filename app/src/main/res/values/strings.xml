@@ -784,10 +784,10 @@
     <string name="preview_jump_to_content">Jump to Content</string>
     <string name="preview_unavailable_title">Preview unavailable</string>
     <string name="preview_unavailable_body">Omni Studio couldn\'t load this source for live preview.</string>
-    <string name="preview_playback_error_title">Can\'t play this clip</string>
-    <string name="preview_playback_error_body">The source may have moved, become unreadable, or use a format this device can\'t decode.</string>
+    <string name="preview_playback_error_title">Preview couldn\'t start</string>
+    <string name="preview_playback_error_body">Try again to restart the preview. If it still fails, check the linked media and device format support.</string>
     <string name="preview_open_media_manager">Open Media Manager</string>
-    <string name="vm_preview_playback_failed_toast">Preview couldn\'t decode this clip. Open Media Manager to relink or replace it.</string>
+    <string name="vm_preview_playback_failed_toast">Preview couldn\'t start. Try again, or check Media Manager if the problem continues.</string>
 
     <!-- TextEditorSheet -->
     <string name="text_editor_title">Text Overlay</string>
@@ -3636,4 +3636,24 @@
     <string name="ai_requirement_unmet_generic">%1$s is not ready yet, so this tool cannot run.</string>
     <string name="ai_requirement_unknown_tool_title">This tool needs something that is not listed</string>
     <string name="ai_requirement_unknown_tool_body">Omni Studio has no requirement entry for this tool, so it cannot say what is missing. Open AI Tools to see which models are installed.</string>
+
+    <!-- Focused settings destinations -->
+    <string name="settings_category_editor">Editor</string>
+    <string name="settings_category_export">Export</string>
+    <string name="settings_category_storage">Storage</string>
+    <string name="settings_category_app">App</string>
+
+    <!-- Project creation, template library and export destinations. -->
+    <string name="template_workspace_subtitle">Start fresh or choose a ready-made layout.</string>
+    <string name="template_start_tab">Start</string>
+    <string name="template_builtin_tab">Built-in</string>
+    <string name="template_saved_tab">Saved</string>
+    <string name="template_project_name">Project name</string>
+    <string name="template_canvas">Canvas</string>
+    <string name="template_create_project">Create project</string>
+    <string name="template_filter_all">All layouts</string>
+    <string name="template_actions_format">Options for %1$s</string>
+    <string name="export_setup_tab">Setup</string>
+    <string name="export_options_tab">Options</string>
+    <string name="export_review_tab">Review</string>
 </resources>

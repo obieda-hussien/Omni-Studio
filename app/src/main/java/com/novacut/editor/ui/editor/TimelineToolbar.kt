@@ -75,7 +75,7 @@ internal fun TimelineToolbarControls(
     var moreMenuExpanded by remember { mutableStateOf(false) }
     Row(
         modifier = modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         TimelineToolbarButton(

@@ -333,7 +333,9 @@ fun ProjectListScreen(
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    if (ProjectListTrashVisibilityPolicy.showsInlineEmptyState(projects.size, trashed.size)) {
+                    if ((hasActiveSearch || hasActiveFilter) &&
+                        ProjectListTrashVisibilityPolicy.showsInlineEmptyState(projects.size, trashed.size)
+                    ) {
                         item(key = "__empty_state") {
                             ProjectEmptyState(
                                 projectTotalCount = projectTotalCount,
@@ -344,7 +346,8 @@ fun ProjectListScreen(
                                     viewModel.setSearchQuery("")
                                     viewModel.setFilterMode(ProjectFilterMode.ALL)
                                 },
-                                actionsEnabled = actionsEnabled
+                                actionsEnabled = actionsEnabled,
+                                scrollable = false,
                             )
                         }
                     }
@@ -486,12 +489,11 @@ fun ProjectListScreen(
 
         // Template picker
         if (showTemplateSheet) {
-            val untitledProjectName = stringResource(R.string.project_untitled)
             ProjectTemplateSheet(
                 onTemplateSelected = { template, templateName ->
                     showTemplateSheet = false
                     viewModel.createProject(
-                        name = if (template.id == "blank") untitledProjectName else templateName,
+                        name = templateName,
                         aspectRatio = template.aspectRatio,
                         templateId = template.id,
                         trackTypes = template.tracks
@@ -644,6 +646,7 @@ private fun ProjectHomeHero(
     showSortControls: Boolean,
     actionsEnabled: Boolean
 ) {
+    var showSortMenu by remember { mutableStateOf(false) }
     val maximumHeight = (LocalConfiguration.current.screenHeightDp * 0.62f)
         .coerceAtLeast(320f)
         .dp
@@ -654,7 +657,7 @@ private fun ProjectHomeHero(
             .verticalScroll(rememberScrollState())
             .background(LocalClearCutColors.current.background)
             .padding(horizontal = Spacing.lg, vertical = Spacing.lg),
-        verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+        verticalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -688,13 +691,15 @@ private fun ProjectHomeHero(
             Text(
                 text = stringResource(R.string.projects_ready_title),
                 color = LocalClearCutColors.current.text,
-                style = MaterialTheme.typography.displayLarge,
+                style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = stringResource(R.string.projects_ready_body),
                 color = LocalClearCutColors.current.subtext,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.widthIn(max = 520.dp)
             )
         }
@@ -758,15 +763,22 @@ private fun ProjectHomeHero(
         }
 
         if (showSortControls) {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                items(SortMode.entries.toList()) { mode ->
-                    ClearCutFilterChip(
-                        onClick = { onSortModeChanged(mode) },
-                        text = mode.localizedLabel(),
-                        selected = sortMode == mode,
-                        accent = ClearCutAccents.Rosewater,
-                        icon = if (sortMode == mode) Icons.Default.Check else null
-                    )
+            Box {
+                ClearCutSecondaryButton(
+                    text = sortMode.localizedLabel(),
+                    icon = Icons.Default.Sort,
+                    onClick = { showSortMenu = true },
+                )
+                DropdownMenu(expanded = showSortMenu, onDismissRequest = { showSortMenu = false }) {
+                    SortMode.entries.forEach { mode ->
+                        DropdownMenuItem(
+                            text = { Text(mode.localizedLabel()) },
+                            leadingIcon = if (mode == sortMode) {
+                                { Icon(Icons.Default.Check, contentDescription = null) }
+                            } else null,
+                            onClick = { onSortModeChanged(mode); showSortMenu = false },
+                        )
+                    }
                 }
             }
         }
@@ -1005,7 +1017,8 @@ private fun ProjectEmptyState(
     filterMode: ProjectFilterMode,
     onCreateProject: () -> Unit,
     onShowAllProjects: () -> Unit,
-    actionsEnabled: Boolean
+    actionsEnabled: Boolean,
+    scrollable: Boolean = true,
 ) {
     val hasAnyProjects = projectTotalCount > 0
     val hasActiveSearch = searchQuery.isNotBlank()
@@ -1033,7 +1046,7 @@ private fun ProjectEmptyState(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
+                .then(if (scrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier)
                 .padding(bottom = Spacing.lg),
             verticalArrangement = Arrangement.spacedBy(Spacing.md)
         ) {
@@ -1446,6 +1459,7 @@ private fun ProjectCard(
                         ClearCutChromeIconButton(
                             icon = Icons.Default.MoreVert,
                             contentDescription = stringResource(R.string.projects_more_cd),
+                            modifier = Modifier.testTag("project_menu_${project.id}"),
                             onClick = { showOverflowMenu = true },
                             shape = RoundedCornerShape(Radius.lg)
                         )
@@ -1486,6 +1500,7 @@ private fun ProjectCard(
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.projects_delete), color = ClearCutAccents.Red) },
+                                modifier = Modifier.testTag("project_delete_${project.id}"),
                                 leadingIcon = {
                                     Icon(
                                         Icons.Default.Delete,
@@ -1852,6 +1867,7 @@ private fun TrashedProjectCard(
                 ClearCutChromeIconButton(
                     icon = Icons.Default.RestoreFromTrash,
                     contentDescription = stringResource(R.string.trash_restore_cd),
+                    modifier = Modifier.testTag("project_restore_${project.id}"),
                     onClick = onRestore,
                     tint = ClearCutAccents.Green,
                     containerColor = ClearCutAccents.Green.copy(alpha = 0.08f),

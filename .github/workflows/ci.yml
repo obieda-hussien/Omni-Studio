@@ -53,6 +53,9 @@ jobs:
         if: always()
         run: git diff -- scripts/dependency_freshness_snapshot.json || true
 
+      - name: Compile UI regression tests
+        run: ./gradlew :app:compileQaAndroidTestKotlin --stacktrace
+
       - name: Lint release
         run: ./gradlew :app:lintRelease -Pomni.ciUnsignedRelease=true --stacktrace
 

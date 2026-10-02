@@ -114,7 +114,7 @@ fun ClearCutPrimaryButton(
         shape = RoundedCornerShape(Radius.md),
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
-            contentColor = colors.canvas,
+            contentColor = colors.onAccent,
             disabledContainerColor = containerColor,
             disabledContentColor = colors.disabledText
         ),
@@ -131,14 +131,14 @@ fun ClearCutPrimaryButton(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (enabled) colors.canvas else colors.disabledText,
+                tint = if (enabled) colors.onAccent else colors.disabledText,
                 modifier = Modifier.size(18.dp)
             )
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(Spacing.sm))
         }
         Text(
             text = text,
-            color = if (enabled) colors.canvas else colors.disabledText,
+            color = if (enabled) colors.onAccent else colors.disabledText,
             style = MaterialTheme.typography.labelLarge,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -337,8 +337,8 @@ fun ClearCutChromeIconButton(
     val colors = LocalClearCutColors.current
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    val resolvedContainer = if (containerColor == Color.Unspecified) colors.panelHighest else containerColor
-    val resolvedBorder = if (borderColor == Color.Unspecified) colors.cardStroke else borderColor
+    val resolvedContainer = if (containerColor == Color.Unspecified) Color.Transparent else containerColor
+    val resolvedBorder = if (borderColor == Color.Unspecified) Color.Transparent else borderColor
     val resolvedTint = if (tint == Color.Unspecified) colors.subtext else tint
     val animatedContainer by animateColorAsState(
         targetValue = when {

@@ -8,6 +8,9 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings as AndroidSettings
+import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -78,6 +81,8 @@ import com.novacut.editor.ui.theme.Radius
 import com.novacut.editor.ui.theme.Spacing
 import java.io.File
 
+internal enum class SettingsCategory { EDITOR, EXPORT, STORAGE, APP }
+
 private enum class SettingsAiModelRemovalTarget {
     WHISPER,
     SEGMENTATION
@@ -101,7 +106,7 @@ fun SettingsScreen(
     onReplayTutorial: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val scrollState = rememberScrollState()
+    var selectedCategory by rememberSaveable { mutableStateOf(SettingsCategory.EDITOR) }
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val aiModelStorage by viewModel.aiModelStorage.collectAsStateWithLifecycle()
     val diagnosticExport by viewModel.diagnosticExport.collectAsStateWithLifecycle()
@@ -161,10 +166,18 @@ fun SettingsScreen(
                 onBack = onBack
             )
 
+            SettingsCategoryRail(selectedCategory = selectedCategory, onSelected = { selectedCategory = it })
+            Crossfade(
+                targetState = selectedCategory,
+                animationSpec = tween(Motion.DurationStandard, easing = Motion.EmphasizedEasing),
+                label = "settingsCategory",
+                modifier = Modifier.weight(1f),
+            ) { displayedCategory ->
+            val scrollState = rememberScrollState()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .fillMaxHeight()
                     .verticalScroll(scrollState)
             ) {
 
@@ -202,6 +215,7 @@ fun SettingsScreen(
         // Export Defaults
         val projectColorPolicy = ProjectColorPolicy.DEFAULT
         SettingsSection(
+            visible = displayedCategory == SettingsCategory.EXPORT,
             title = stringResource(R.string.settings_export_defaults),
             description = stringResource(R.string.settings_export_defaults_description)
         ) {
@@ -267,6 +281,7 @@ fun SettingsScreen(
 
         // Export Notifications
         SettingsSection(
+            visible = displayedCategory == SettingsCategory.EXPORT,
             title = stringResource(R.string.settings_export_notifications),
             description = stringResource(R.string.settings_export_notifications_description)
         ) {
@@ -278,6 +293,7 @@ fun SettingsScreen(
 
         // Timeline
         SettingsSection(
+            visible = displayedCategory == SettingsCategory.EDITOR,
             title = stringResource(R.string.settings_timeline),
             description = stringResource(R.string.settings_timeline_description)
         ) {
@@ -369,6 +385,7 @@ fun SettingsScreen(
 
         // AI Models
         SettingsSection(
+            visible = displayedCategory == SettingsCategory.STORAGE,
             title = stringResource(R.string.settings_ai_models),
             description = stringResource(R.string.settings_ai_models_description)
         ) {
@@ -463,6 +480,7 @@ fun SettingsScreen(
 
         // Project Storage
         SettingsSection(
+            visible = displayedCategory == SettingsCategory.STORAGE,
             title = stringResource(R.string.settings_project_storage_title),
             description = stringResource(
                 R.string.settings_project_storage_media,
@@ -501,6 +519,7 @@ fun SettingsScreen(
 
         // Appearance
         SettingsSection(
+            visible = displayedCategory == SettingsCategory.EDITOR,
             title = stringResource(R.string.settings_appearance),
             description = stringResource(R.string.settings_appearance_description)
         ) {
@@ -518,6 +537,7 @@ fun SettingsScreen(
 
         // Editor
         SettingsSection(
+            visible = displayedCategory == SettingsCategory.EDITOR,
             title = stringResource(R.string.settings_editor),
             description = stringResource(R.string.settings_editor_description)
         ) {
@@ -598,6 +618,7 @@ fun SettingsScreen(
 
         // Tutorial
         SettingsSection(
+            visible = displayedCategory == SettingsCategory.APP,
             title = stringResource(R.string.settings_tutorial),
             description = stringResource(R.string.settings_tutorial_description)
         ) {
@@ -618,6 +639,7 @@ fun SettingsScreen(
 
         // Diagnostics
         SettingsSection(
+            visible = displayedCategory == SettingsCategory.APP,
             title = stringResource(R.string.settings_diagnostics),
             description = stringResource(R.string.settings_diagnostics_description)
         ) {
@@ -654,6 +676,7 @@ fun SettingsScreen(
         // Engine helpers (groupForDisplay / controlSummary) are pure so the
         // panel re-renders without any view-model state today.
         SettingsSection(
+            visible = displayedCategory == SettingsCategory.APP,
             title = stringResource(R.string.settings_privacy_section_title),
             description = stringResource(R.string.settings_privacy_section_description)
         ) {
@@ -670,6 +693,7 @@ fun SettingsScreen(
 
         // Third-party notices
         SettingsSection(
+            visible = displayedCategory == SettingsCategory.APP,
             title = stringResource(R.string.settings_open_source_licenses_section_title),
             description = stringResource(R.string.settings_open_source_licenses_section_description)
         ) {
@@ -688,6 +712,7 @@ fun SettingsScreen(
         // the build opts out via BuildConfig.UPDATE_CHECK_AVAILABLE.
         if (BuildConfig.UPDATE_CHECK_AVAILABLE) {
             SettingsSection(
+            visible = displayedCategory == SettingsCategory.APP,
                 title = stringResource(R.string.settings_updates_section_title),
                 description = stringResource(R.string.settings_updates_section_description)
             ) {
@@ -742,6 +767,7 @@ fun SettingsScreen(
 
         // About
         SettingsSection(
+            visible = displayedCategory == SettingsCategory.APP,
             title = stringResource(R.string.settings_about),
             description = stringResource(R.string.settings_about_description)
         ) {
@@ -751,6 +777,7 @@ fun SettingsScreen(
         }
 
             Spacer(Modifier.height(Spacing.xxl))
+            }
             }
         }
 
@@ -964,7 +991,7 @@ private fun SettingsHero(
                 Text(
                     stringResource(R.string.settings_title),
                     color = LocalClearCutColors.current.text,
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -980,79 +1007,42 @@ private fun SettingsHero(
             }
         }
 
-        HorizontalDivider(
-            modifier = Modifier.padding(top = Spacing.lg),
-            color = LocalClearCutColors.current.cardStroke
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            SettingsOverviewStat(
-                icon = Icons.Default.Tune,
-                label = stringResource(R.string.settings_editor),
-                value = editorModeLabel,
-                accent = ClearCutAccents.Mauve,
-                modifier = Modifier.weight(1f)
-            )
-            Box(
-                modifier = Modifier
-                    .width(1.dp)
-                    .height(56.dp)
-                    .background(LocalClearCutColors.current.cardStroke)
-            )
-            SettingsOverviewStat(
-                icon = Icons.Default.Schedule,
-                label = stringResource(R.string.settings_auto_save),
-                value = if (settings.autoSaveEnabled) "${settings.autoSaveIntervalSec}s" else stringResource(R.string.settings_off),
-                accent = ClearCutAccents.Green,
-                modifier = Modifier.weight(1f)
-            )
-        }
     }
 }
 
 @Composable
-private fun SettingsOverviewStat(
-    icon: ImageVector,
-    label: String,
-    value: String,
-    accent: androidx.compose.ui.graphics.Color,
-    modifier: Modifier = Modifier
-) {
+private fun SettingsCategoryRail(selectedCategory: SettingsCategory, onSelected: (SettingsCategory) -> Unit) {
+    val colors = LocalClearCutColors.current
     Row(
-        modifier = modifier
-            .semantics {
-            contentDescription = "$label. $value"
-        }
-            .padding(horizontal = Spacing.md, vertical = Spacing.lg),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.lg, vertical = Spacing.sm)
+            .background(colors.panelRaised, RoundedCornerShape(Radius.lg)).padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = accent,
-            modifier = Modifier.size(24.dp)
-        )
-        Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = label,
-                color = accent,
-                style = MaterialTheme.typography.labelMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+        SettingsCategory.entries.forEach { category ->
+            val label = stringResource(when (category) {
+                SettingsCategory.EDITOR -> R.string.settings_category_editor
+                SettingsCategory.EXPORT -> R.string.settings_category_export
+                SettingsCategory.STORAGE -> R.string.settings_category_storage
+                SettingsCategory.APP -> R.string.settings_category_app
+            })
+            val selected = category == selectedCategory
+            val container by animateColorAsState(
+                targetValue = if (selected) colors.selectedSurface else Color.Transparent,
+                animationSpec = tween(Motion.DurationFast), label = "settingsCategorySelection",
             )
-            Text(
-                text = value,
-                color = LocalClearCutColors.current.text,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Box(
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp)
+                    .background(container, RoundedCornerShape(Radius.md))
+                    .selectable(selected = selected, role = Role.Tab, onClick = { onSelected(category) })
+                    .testTag("settings_category_${category.name.lowercase(java.util.Locale.ROOT)}")
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(label, style = MaterialTheme.typography.labelMedium,
+                    color = if (selected) { if (colors.highContrast) colors.onAccent else colors.accent } else colors.subtext,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            }
         }
     }
 }
@@ -1452,19 +1442,29 @@ private fun modelStorageLabel(bytes: Long, downloadSize: String): String {
 private fun SettingsSection(
     title: String,
     description: String? = null,
+    visible: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    if (!visible) return
+    val colors = LocalClearCutColors.current
     Column(modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.md)) {
         Text(
-            text = title.uppercase(),
+            text = title,
             color = LocalClearCutColors.current.subtext,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.titleSmall,
             modifier = Modifier.padding(bottom = Spacing.xs)
         )
-        Column(
-            modifier = Modifier.animateContentSize(),
-            content = content
-        )
+        if (!description.isNullOrBlank()) {
+            Text(description, color = colors.subtext, style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = Spacing.sm))
+        }
+        Surface(
+            color = colors.panelRaised,
+            shape = RoundedCornerShape(Radius.xl),
+            border = if (colors.highContrast) androidx.compose.foundation.BorderStroke(1.dp, colors.cardStrokeStrong) else null,
+        ) {
+            Column(modifier = Modifier.padding(horizontal = Spacing.md), content = content)
+        }
     }
 }
 

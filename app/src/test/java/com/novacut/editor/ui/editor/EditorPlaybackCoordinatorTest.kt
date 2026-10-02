@@ -1,6 +1,7 @@
 package com.novacut.editor.ui.editor
 
 import androidx.media3.common.Player
+import androidx.media3.common.PlaybackException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
@@ -52,6 +53,64 @@ class EditorPlaybackCoordinatorTest {
         assertEquals(2, port.playRequests)
         assertEquals(1, port.pauseCount)
         assertEquals(listOf("playing:false", "requested:false", "start-failed"), events)
+    }
+
+    @Test
+    fun playingEventWithoutClockProgressDoesNotDisableRecovery() = runBlocking {
+        val port = FakePlaybackPort().apply { emitPlayingOnPlay = true }
+        val events = mutableListOf<String>()
+        val coordinator = coordinator(port)
+        coordinator.start(this, callbacks(events, { snapshot(playheadMs = 1_000L) }))
+        coordinator.playFromTimelinePosition(1_000L, restartSession = false)
+        yield()
+        coordinator.stop()
+        assertEquals(2, port.playRequests)
+        assertTrue(events.contains("start-failed"))
+    }
+
+    @Test
+    fun explicitPlayResetsScrubbingBeforeRequestingPlayback() = runBlocking {
+        val port = FakePlaybackPort()
+        val coordinator = coordinator(port)
+        coordinator.start(this, callbacks(mutableListOf(), { snapshot() }))
+        coordinator.setScrubbingMode(true)
+        coordinator.playFromTimelinePosition(0L, restartSession = false)
+        assertFalse(port.scrubbingAtPlay)
+        coordinator.stop()
+    }
+
+    @Test
+    fun synchronousSessionSetupFailureIsReportedWithoutEscapingTheEditor() = runBlocking {
+        val port = FakePlaybackPort().apply { failOnPlay = true }
+        val events = mutableListOf<String>()
+        val coordinator = coordinator(port)
+        coordinator.start(this, callbacks(events, { snapshot() }))
+        coordinator.playFromTimelinePosition(0L, restartSession = false)
+        assertTrue(events.contains("start-failed"))
+        assertFalse(port.requested)
+        coordinator.stop()
+    }
+
+    @Test
+    fun repeatedDecoderErrorsStopAfterOneAutomaticRecovery() = runBlocking {
+        val port = FakePlaybackPort()
+        val events = mutableListOf<String>()
+        val coordinator = EditorPlaybackCoordinator(
+            port = port,
+            wait = { if (it > 1L) delay(60_000L) },
+            frameWait = { delay(60_000L) },
+            surfaceRecoveryDelayMs = 1L,
+        )
+        coordinator.start(this, callbacks(events, { snapshot(playheadMs = 1_000L) }))
+        val error = PlaybackException("decoder", null, PlaybackException.ERROR_CODE_DECODING_FAILED)
+        port.emitError(error)
+        yield()
+        assertEquals(1, port.playRequests)
+        port.emitError(error)
+        yield()
+        assertEquals(1, port.playRequests)
+        assertTrue(events.contains("error"))
+        coordinator.stop()
     }
 
     @Test
@@ -144,6 +203,9 @@ class EditorPlaybackCoordinatorTest {
         var pauseCount = 0
         var scrubbing = false
         var loopingEnabled = false
+        var emitPlayingOnPlay = false
+        var scrubbingAtPlay = false
+        var failOnPlay = false
         private var listener: Player.Listener? = null
 
         override fun setPlayerListener(listener: Player.Listener) {
@@ -161,10 +223,13 @@ class EditorPlaybackCoordinatorTest {
         override fun getAbsolutePositionMs(): Long = positionMs
 
         override fun playFromTimelinePosition(positionMs: Long, restartSession: Boolean) {
+            if (failOnPlay) throw IllegalStateException("preview setup")
             this.positionMs = positionMs
             requested = true
             ended = false
             playRequests++
+            scrubbingAtPlay = scrubbing
+            if (emitPlayingOnPlay) emitPlaying(true)
         }
 
         override fun pause() {
@@ -202,6 +267,10 @@ class EditorPlaybackCoordinatorTest {
         fun emitEnded() {
             ended = true
             listener?.onPlaybackStateChanged(Player.STATE_ENDED)
+        }
+
+        fun emitError(error: PlaybackException) {
+            listener?.onPlayerError(error)
         }
     }
 }

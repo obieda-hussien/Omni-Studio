@@ -759,10 +759,10 @@
     <string name="preview_jump_to_content">Saltar al contenido</string>
     <string name="preview_unavailable_title">Vista previa no disponible</string>
     <string name="preview_unavailable_body">Omni Studio no pudo cargar esta fuente para una vista previa en vivo.</string>
-    <string name="preview_playback_error_title">No se puede reproducir este clip</string>
-    <string name="preview_playback_error_body">Es posible que la fuente se haya movido, no se pueda leer o use un formato que este dispositivo no pueda decodificar.</string>
+    <string name="preview_playback_error_title">No se pudo iniciar la vista previa</string>
+    <string name="preview_playback_error_body">Reintenta para reiniciar la vista previa. Si sigue fallando, revisa los medios vinculados y los formatos compatibles con el dispositivo.</string>
     <string name="preview_open_media_manager">Abrir el gestor de medios</string>
-    <string name="vm_preview_playback_failed_toast">La vista previa no pudo decodificar este clip; abra el gestor de medios para volver a vincularlo o reemplazarlo</string>
+    <string name="vm_preview_playback_failed_toast">No se pudo iniciar la vista previa. Reintenta o revisa el gestor de medios si el problema continúa.</string>
     <string name="text_editor_title">Superposición de texto</string>
     <string name="text_editor_save">Guardar</string>
     <string name="text_editor_font">fuente</string>
@@ -3363,4 +3363,22 @@
     <string name="ai_requirement_unmet_generic">%1$s aún no está listo, así que esta herramienta no puede ejecutarse.</string>
     <string name="ai_requirement_unknown_tool_title">Esta herramienta necesita algo que no está registrado</string>
     <string name="ai_requirement_unknown_tool_body">Omni Studio no tiene una entrada de requisitos para esta herramienta, así que no puede indicar qué falta. Abre Herramientas de IA para ver qué modelos están instalados.</string>
+    <string name="settings_category_editor">Editor</string>
+    <string name="settings_category_export">Exportación</string>
+    <string name="settings_category_storage">Almacenamiento</string>
+    <string name="settings_category_app">Aplicación</string>
+
+    <!-- Project creation, template library and export destinations. -->
+    <string name="template_workspace_subtitle">Empieza de cero o elige un diseño preparado.</string>
+    <string name="template_start_tab">Crear</string>
+    <string name="template_builtin_tab">Incluidas</string>
+    <string name="template_saved_tab">Guardadas</string>
+    <string name="template_project_name">Nombre del proyecto</string>
+    <string name="template_canvas">Lienzo</string>
+    <string name="template_create_project">Crear proyecto</string>
+    <string name="template_filter_all">Todos los diseños</string>
+    <string name="template_actions_format">Opciones de %1$s</string>
+    <string name="export_setup_tab">Formato</string>
+    <string name="export_options_tab">Opciones</string>
+    <string name="export_review_tab">Revisión</string>
 </resources>

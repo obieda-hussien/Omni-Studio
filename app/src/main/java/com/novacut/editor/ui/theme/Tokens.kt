@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
- * ClearCut design tokens.
+ * Omni Studio design tokens.
  *
  * Centralized spacing / radius / motion / elevation values so the editor surfaces have a
  * single, coherent rhythm instead of every panel inventing its own scale. Use these in place
@@ -119,17 +119,17 @@ object Motion {
     /** Standard easing — symmetric for hover/press/selection state changes. */
     val StandardEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
-    /** 120 ms — instant feedback (selection indicators, hover/press tints). */
-    const val DurationFast = 120
+    /** 100 ms — instant feedback (selection indicators, hover/press tints). */
+    const val DurationFast = 100
 
-    /** 200 ms — small UI changes (chip expansion, badge pulses, dropdown unfurl). */
-    const val DurationStandard = 200
+    /** 160 ms — small UI changes (chip expansion, badge pulses, dropdown unfurl). */
+    const val DurationStandard = 160
 
-    /** 280 ms — panel + sheet enter/exit, full-section transitions. */
-    const val DurationMedium = 280
+    /** 220 ms — panel + sheet enter/exit, full-section transitions. */
+    const val DurationMedium = 220
 
-    /** 400 ms — large reveals (onboarding cards, hero state changes). */
-    const val DurationLarge = 400
+    /** 300 ms — large reveals (onboarding cards, hero state changes). */
+    const val DurationLarge = 300
 
     fun fast(easing: CubicBezierEasing = StandardEasing) =
         tween<Float>(durationMillis = DurationFast, easing = easing)
@@ -152,7 +152,7 @@ object Motion {
     /** Critical damped spring — primary tactile interactions (chip selection, knob feedback). */
     fun snappySpring() = spring<Float>(
         dampingRatio = Spring.DampingRatioNoBouncy,
-        stiffness = Spring.StiffnessMediumLow
+        stiffness = Spring.StiffnessMedium
     )
 }
 
