@@ -3656,4 +3656,41 @@
     <string name="export_setup_tab">Setup</string>
     <string name="export_options_tab">Options</string>
     <string name="export_review_tab">Review</string>
+    <!-- AI tool browser: tool discovery stays separate from model maintenance. -->
+    <string name="ai_tools_browser_subtitle">Find an assist for your next edit.</string>
+    <string name="ai_tools_tab_tools">Tools</string>
+    <string name="ai_tools_tab_models">Models &amp; setup</string>
+    <string name="ai_tools_search">Search tools</string>
+    <string name="ai_tools_clear_search">Clear search</string>
+    <string name="ai_tools_category_all">All</string>
+    <string name="ai_tools_category_edit">Editing</string>
+    <string name="ai_tools_category_audio">Audio &amp; captions</string>
+    <string name="ai_tools_category_background">Background</string>
+    <string name="ai_tools_category_motion">Motion &amp; framing</string>
+    <string name="ai_tools_category_enhance">Color &amp; detail</string>
+    <string name="ai_tools_selection_help">Select a timeline clip to use clip tools. Cut Assistant works across the timeline.</string>
+    <string name="ai_tools_select_clip">Select a clip</string>
+    <string name="ai_tools_select_clip_for_tool">Select a clip to use %1$s.</string>
+    <string name="ai_tools_use_tool">Use tool</string>
+    <string name="ai_tools_details_expanded">Details expanded</string>
+    <string name="ai_tools_details_collapsed">Show details</string>
+    <string name="ai_tools_no_results">No matching tools</string>
+    <string name="ai_tools_search_hint">Try another name or choose a different category.</string>
+    <string name="ai_tools_reset_filters">Show all tools</string>
+    <string name="ai_tools_manage_models">Manage models</string>
+    <string name="ai_tools_busy_hint">Wait for the current task to finish, or cancel it above.</string>
+    <string name="ai_tools_model_speech">Speech recognition</string>
+    <string name="ai_tools_model_background">Background isolation</string>
+    <string name="ai_tools_model_objects">Object removal</string>
+    <string name="ai_tools_models_description">Optional downloads improve supported tools. Some advanced tools need components that are not included in this build.</string>
+    <string name="ai_tools_download">Download</string>
+    <string name="ai_tools_speech_error">Retry the download to improve speech recognition.</string>
+    <string name="ai_tools_speech_downloading">Downloading speech recognition for use on this device.</string>
+    <string name="ai_tools_background_ready">Background isolation is available on this device.</string>
+    <string name="ai_tools_background_error">Retry the download to improve background isolation.</string>
+    <string name="ai_tools_background_downloading">Downloading background isolation for use on this device.</string>
+    <plurals name="ai_tools_result_count">
+        <item quantity="one">%1$d tool</item>
+        <item quantity="other">%1$d tools</item>
+    </plurals>
 </resources>

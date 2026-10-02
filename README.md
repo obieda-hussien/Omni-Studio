@@ -72,6 +72,12 @@ with coordinated pan/zoom and a preview/editing split on short landscape phone w
 See [workspace behavior](docs/ARCHITECTURE.md#workspace-organization) and
 [timeline interaction fixes and verification](docs/timeline-interaction-regressions.md).
 
+AI Tools opens directly to a searchable tool list with task categories and expandable details.
+Only one tool's details open at a time, and processing starts from an explicit **Use tool** action.
+**Select a clip** returns to the timeline when media is needed. **Models & setup** keeps downloads,
+removal confirmations, and stabilization profiles in a separate tab. Processing progress and cancellation
+stay visible across both tabs; the browser retains search, category, and scroll position while switching.
+
 ## Existing editor baseline
 
 The inherited editor already contains production editing systems that Omni Studio will adapt rather than rewrite blindly.
