@@ -17,7 +17,9 @@ concurrency:
 jobs:
   verify:
     name: Verify release build
-    runs-on: ubuntu-latest
+    # Keep the release lane on the validated LTS image. ubuntu-latest moves
+    # to 26.04 starting 2026-10-19; adopt it through a separate tested upgrade.
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g"

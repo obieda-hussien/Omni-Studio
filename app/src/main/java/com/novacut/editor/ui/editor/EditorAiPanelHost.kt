@@ -6,7 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import com.novacut.editor.R
 import com.novacut.editor.engine.InpaintingModelState
 import com.novacut.editor.engine.segmentation.SegmentationModelState
@@ -24,7 +24,7 @@ fun BoxScope.EditorAiPanelHost(
     inpaintingDownloadProgress: Float,
     networkAvailable: Boolean,
 ) {
-    val context = LocalContext.current
+    val resources = LocalResources.current
     val stabilizationProfileImportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
     ) { uri ->
@@ -45,7 +45,7 @@ fun BoxScope.EditorAiPanelHost(
             },
             onDisabledToolTapped = { toolName ->
                 viewModel.hideAiToolsPanel()
-                viewModel.showToast(context.getString(R.string.ai_tools_select_clip_for_tool, toolName))
+                viewModel.showToast(resources.getString(R.string.ai_tools_select_clip_for_tool, toolName))
             },
             onCancelProcessing = viewModel::cancelAiTool,
             onClose = viewModel::hideAiToolsPanel,

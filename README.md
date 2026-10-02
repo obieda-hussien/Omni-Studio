@@ -32,6 +32,7 @@ The long-term goal is **Omni Studio — Agent-Native Creative Suite**: video fir
 
 - Android API 26+; compile/target API 37.
 - Kotlin 2.4.10 + Jetpack Compose + Material 3.
+- Gradle 9.8.0 with a checksum-pinned wrapper; Android CI uses Ubuntu 24.04 and JDK 17.
 - Media3 playback, transformation, effects and muxing.
 - Source-pinned FFmpegKitNext fallback/native processing.
 - Room 3 persistence, Hilt/KSP, WorkManager and baseline profiles.
