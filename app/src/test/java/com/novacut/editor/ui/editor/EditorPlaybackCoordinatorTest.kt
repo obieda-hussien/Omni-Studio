@@ -149,6 +149,28 @@ class EditorPlaybackCoordinatorTest {
         assertFalse(port.listenerAttached)
     }
 
+    @Test
+    fun manualTimelineGestureSuspendsFollowAndReleaseRestoresIt() = runBlocking {
+        val port = FakePlaybackPort().apply { playing = true; positionMs = 8_000L }
+        val frames = mutableListOf<EditorPlaybackCoordinator.PlaybackFrame>()
+        val coordinator = EditorPlaybackCoordinator(port, wait = {}, frameWait = { delay(1L) }, frameIntervalMs = 1L)
+        coordinator.start(this, callbacks(
+            events = mutableListOf(),
+            snapshot = { snapshot(scrollOffsetMs = 1000L, timelineWidthPx = 600f, maxTimelineScrollOffsetMs = 10_000L) },
+            onFrame = { frames += it },
+        ))
+        coordinator.setTimelineFollowSuspended(true)
+        delay(12L)
+        assertTrue(frames.isNotEmpty())
+        assertTrue(frames.all { it.scrollOffsetMs == 1000L })
+        frames.clear()
+        coordinator.setTimelineFollowSuspended(false)
+        delay(12L)
+        coordinator.stop()
+        assertTrue(frames.isNotEmpty())
+        assertTrue(frames.last().scrollOffsetMs > 1000L)
+    }
+
     private fun coordinator(
         port: FakePlaybackPort,
     ) = EditorPlaybackCoordinator(

@@ -14,6 +14,18 @@ import org.junit.Test
 class TimelineClipLayoutTest {
 
     @Test
+    fun `short clips keep two distinct trim edges and a draggable body`() {
+        assertEquals(TimelineClipGestureZone.TRIM_LEFT,
+            resolveTimelineClipGestureZone(3f, 30f, 28f, false))
+        assertEquals(TimelineClipGestureZone.SLIDE,
+            resolveTimelineClipGestureZone(15f, 30f, 28f, false))
+        assertEquals(TimelineClipGestureZone.TRIM_RIGHT,
+            resolveTimelineClipGestureZone(27f, 30f, 28f, false))
+        assertEquals(TimelineClipGestureZone.SLIP,
+            resolveTimelineClipGestureZone(15f, 30f, 28f, true))
+    }
+
+    @Test
     fun `clip layout maps timeline position into visible pixel bounds`() {
         val clip = clip(
             id = "clip",
