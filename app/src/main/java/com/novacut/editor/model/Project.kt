@@ -238,6 +238,8 @@ data class Clip(
     val clipLabel: ClipLabel = ClipLabel.NONE,
     val sourceColorMetadata: SourceColorMetadata = SourceColorMetadata(),
     val name: String? = null,
+    /** Still images have an editable presentation duration, not a finite media stream. */
+    val isStillImage: Boolean = false,
 ) {
     init {
         require(speed > 0f) { "Clip speed must be positive" }

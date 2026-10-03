@@ -182,9 +182,9 @@ val aiTools = listOf(
         R.string.ai_tool_frame_interp_desc,
         Icons.Default.SlowMotionVideo,
         ClearCutAccents.Sky,
-        readinessResId = R.string.ai_tool_status_model_gated,
-        readinessHintResId = R.string.ai_tool_hint_model_required,
-        readinessAccent = ClearCutAccents.Peach
+        readinessResId = R.string.ai_tool_status_ready,
+        readinessHintResId = R.string.ai_frame_interp_hint,
+        readinessAccent = ClearCutAccents.Green
     ),
     AiToolConfig(
         "ai_background",

@@ -1,5 +1,6 @@
 package com.novacut.editor.ui.editor
 
+import kotlin.math.roundToLong
 import com.novacut.editor.model.Clip
 import com.novacut.editor.model.TimelineMarker
 import com.novacut.editor.model.Track
@@ -89,7 +90,8 @@ internal fun resolveTimelineClipGestureAction(
     if (zone == TimelineClipGestureZone.NONE || !pixelsPerMs.isFinite() || pixelsPerMs < 0.001f || !deltaXPx.isFinite()) {
         return null
     }
-    val deltaMs = (deltaXPx / pixelsPerMs).toLong()
+    val deltaMs = (deltaXPx / pixelsPerMs *
+        if (zone == TimelineClipGestureZone.TRIM_LEFT || zone == TimelineClipGestureZone.TRIM_RIGHT) clip.speed else 1f).roundToLong()
     return when (zone) {
         TimelineClipGestureZone.TRIM_LEFT -> {
             val maxTrimStart = clip.trimEndMs - minimumClipDurationMs
@@ -105,12 +107,13 @@ internal fun resolveTimelineClipGestureAction(
         }
         TimelineClipGestureZone.TRIM_RIGHT -> {
             val minTrimEnd = clip.trimStartMs + minimumClipDurationMs
-            if (minTrimEnd > clip.sourceDurationMs) {
+            val maximumEnd = if (clip.isStillImage) MAX_STILL_IMAGE_DURATION_MS else clip.sourceDurationMs
+            if (minTrimEnd > maximumEnd) {
                 null
             } else {
                 TimelineClipGestureAction.TrimRight(
                     trimEndMs = (clip.trimEndMs + deltaMs)
-                        .coerceIn(minTrimEnd, clip.sourceDurationMs)
+                        .coerceIn(minTrimEnd, maximumEnd)
                 )
             }
         }

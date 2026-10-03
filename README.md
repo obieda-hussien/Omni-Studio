@@ -101,7 +101,7 @@ The table below is generated-contract content and intentionally mirrors `scripts
 | **AI Green Screen** | Planned: RobustVideoMatting requires model integration | Planned |
 | **Object Removal** | LaMa-Dilated inpainting with rectangle, ellipse, and freehand mask rendering for stills and motion clips | Yes (explicit ~174 MB model download) |
 | **Video Upscaling** | Planned: Real-ESRGAN requires model integration | Planned |
-| **Frame Interpolation** | Planned: RIFE v4.6 requires the NCNN dependency | Planned |
+| **Frame Interpolation** | FFmpeg motion-compensated optical flow (full resolution; RIFE backend planned) | Yes (built-in; no model download) |
 | **Style Transfer** | Planned: AnimeGANv2 and Fast NST require model integration | Planned |
 | **Stabilization** | Built-in offline motion analysis with bounded translation search and shared preview/export transforms | Yes |
 | **Smart Reframe** | MediaPipe BlazeFace detection, EMA-smoothed crop trajectory, 3 strategies (stationary/pan/track) | Yes |
@@ -138,7 +138,7 @@ The table below is generated-contract content and intentionally mirrors `scripts
 ```
 com.novacut.editor/
 ├── ai/                     # AI features (captions, scene detect, stabilize, auto-edit)
-├── engine/                 # Core engines (78 injectable singletons across 199 files)
+├── engine/                 # Core engines (78 injectable singletons across 200 files)
 │   ├── VideoEngine          # Media3 playback + export
 │   ├── AudioEngine          # Waveform extraction + PCM processing
 │   ├── AudioEffectsEngine   # DSP chain (EQ, compressor, chorus, etc.)
@@ -149,7 +149,7 @@ com.novacut.editor/
 │   ├── BeatDetectionEngine  # Spectral flux onset + BPM estimation
 │   ├── LoudnessEngine       # EBU R128 measurement + normalization
 │   ├── NoiseReductionEngine # DeepFilterNet 3 + spectral-gate fallback
-│   ├── FrameInterpolationEngine  # RIFE v4.6 slow-motion (stub)
+│   ├── FrameInterpolationEngine  # FFmpeg optical-flow smoothing; RIFE planned
 │   ├── InpaintingEngine     # LaMa object removal
 │   ├── UpscaleEngine        # Real-ESRGAN video upscaling (stub)
 │   ├── VideoMattingEngine   # RVM AI green screen (stub)

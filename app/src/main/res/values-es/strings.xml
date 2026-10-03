@@ -1387,7 +1387,7 @@
     <string name="tool_style_transfer">Estilo\nTransferir</string>
     <string name="tool_object_remove">Objeto\nEliminar</string>
     <string name="tool_upscale_4k">Exclusivo\n4K</string>
-    <string name="tool_frame_interp">Marco\nInterp.</string>
+    <string name="tool_frame_interp">Suavizar movimiento</string>
     <string name="tool_ai_upscale">IA\nExclusivo</string>
     <string name="tool_ai_background">AI\nAntecedentes</string>
     <string name="tool_ai_stabilize">AI\nEstabilizar</string>
@@ -3418,4 +3418,21 @@
         <item quantity="one">%1$d herramienta</item>
         <item quantity="other">%1$d herramientas</item>
     </plurals>
+
+    <string name="timeline_edit_timing">Tiempo</string>
+    <string name="timeline_start_seconds">Inicio (segundos)</string>
+    <string name="timeline_duration_seconds">Duración (segundos)</string>
+    <string name="timeline_timing_help">Introduce un inicio y una duración exactos. Las imágenes se pueden alargar; el vídeo y el audio llegan hasta el final del archivo. Los demás clips conservan su duración.</string>
+    <string name="timeline_gesture_hint">Desliza para explorar · Mantén para mover · Arrastra los bordes para recortar</string>
+    <string name="timeline_timing_summary">Inicio %1$s s · Duración %2$s s</string>
+    <string name="timeline_timing_constrained">Tiempo ajustado al archivo y al espacio disponible en la pista.</string>
+
+    <string name="timeline_apply_timing">Aplicar</string>
+    <string name="ai_frame_interp_hint">Genera movimiento más fluido en este dispositivo mediante flujo óptico. Sin descargar modelos. Conserva la duración, la resolución y el audio; el procesamiento puede tardar.</string>
+    <string name="ai_frame_interp_failed">No se pudo suavizar este vídeo. Usa vídeo SDR con menos de 120 fps y un motor de interpolación disponible.</string>
+    <string name="ai_frame_interp_clip_changed">El clip cambió durante el procesamiento. Vuelve a suavizar para usar la última edición.</string>
+    <string name="ai_frame_interp_applied">Movimiento suavizado. Se han conservado el tiempo y el audio originales.</string>
+    <string name="ai_tool_unavailable">Próximamente</string>
+    <string name="ai_tool_unavailable_hint">Esta herramienta no está incluida en esta versión. Elige una herramienta disponible para continuar.</string>
+    <string name="ai_frame_interp_hdr_unsupported">El suavizado de movimiento admite vídeo SDR. Se ha conservado el archivo HDR original.</string>
 </resources>

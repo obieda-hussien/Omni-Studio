@@ -4692,6 +4692,31 @@ class EditorViewModel @Inject constructor(
         // beginSlipEdit() already suppresses intermediate decode work.
     }
 
+    fun setClipTiming(clipId: String, startMs: Long, durationMs: Long) {
+        val original = _state.value.tracks
+        val timebase = _state.value.project.timelineTimebase
+        val candidate = planClipTiming(original, clipId, startMs, durationMs, timebase)
+        if (hasSameClipTiming(candidate, original)) return
+        saveUndoState("Edit clip timing")
+        _state.update { recalculateDuration(it.copy(tracks = candidate)) }
+        rebuildPlayerTimeline()
+        saveProject()
+        val resolved = candidate.findClipLocation(clipId)?.clip ?: return
+        if (kotlin.math.abs(resolved.timelineStartMs - startMs) > timebase.timeMsAt(1L) ||
+            kotlin.math.abs(resolved.durationMs - durationMs) > timebase.timeMsAt(1L)) {
+            showToast(text(R.string.timeline_timing_constrained))
+        }
+    }
+
+    /** Arrange moves preserve source windows; the advanced slide tool remains separate. */
+    fun moveClip(clipId: String, deltaMs: Long) {
+        val tracks = slideEditStartTracks ?: _state.value.tracks
+        val candidate = moveLinkedClips(tracks, clipId, deltaMs, _state.value.project.timelineTimebase)
+        if (hasSameClipTiming(candidate, _state.value.tracks)) return
+        markTimelineGestureMutation("Move clip")
+        _state.update { recalculateDuration(it.copy(tracks = candidate)) }
+    }
+
     fun slideClip(clipId: String, slideAmountMs: Long) {
         val tracks = slideEditStartTracks ?: _state.value.tracks
         val candidateTracks = planSlideTracks(tracks, clipId, slideAmountMs)

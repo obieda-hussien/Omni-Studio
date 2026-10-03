@@ -229,11 +229,32 @@
     {
       "id": "frame_interpolation",
       "name": "Frame Interpolation",
-      "engine": "Planned: RIFE v4.6 requires the NCNN dependency",
-      "onDevice": "Planned",
-      "status": "planned",
-      "reachability": "dependency_missing",
-      "evidence": [{"path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt", "terms": ["Tool.FRAME_INTERP", "Availability.DEPENDENCY_MISSING"]}]
+      "engine": "FFmpeg motion-compensated optical flow (full resolution; RIFE backend planned)",
+      "onDevice": "Yes (built-in; no model download)",
+      "status": "available",
+      "reachability": "reachable",
+      "evidence": [
+        {
+          "path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt",
+          "terms": [
+            "Tool.FRAME_INTERP",
+            "Availability.READY"
+          ]
+        },
+        {
+          "path": "app/src/main/java/com/novacut/editor/engine/FFmpegEngine.kt",
+          "terms": [
+            "interpolateMotion",
+            "supportsMotionInterpolation"
+          ]
+        },
+        {
+          "path": "app/src/main/java/com/novacut/editor/ui/editor/AiToolsDelegate.kt",
+          "terms": [
+            "frameInterpolationEngine.smoothMotion"
+          ]
+        }
+      ]
     },
     {
       "id": "style_transfer",

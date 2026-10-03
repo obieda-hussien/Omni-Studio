@@ -18,9 +18,9 @@ class PublicFeatureClaimsTest {
     }
 
     @Test
-    fun readmeSlipSlideClaimIsBackedByEditorWiring() {
+    fun readmeArrangementClaimIsBackedByEditorWiring() {
         val readme = locate("README.md").readText()
-        if (!readme.contains("slip/slide editing", ignoreCase = true)) {
+        if (!readme.contains("clip arrangement and slip editing", ignoreCase = true)) {
             return
         }
 
@@ -29,8 +29,8 @@ class PublicFeatureClaimsTest {
         val editorViewModel = locate("app/src/main/java/com/novacut/editor/ui/editor/EditorViewModel.kt").readText()
 
         assertTrue(
-            "README slip/slide claim requires EditorScreen to wire slide gestures",
-            editorScreen.contains("onSlideClip = viewModel::slideClip")
+            "README arrangement claim requires EditorScreen to wire safe moves",
+            editorScreen.contains("onSlideClip = viewModel::moveClip")
         )
         assertTrue(
             "README slip/slide claim requires EditorScreen to wire slip gestures",

@@ -163,6 +163,8 @@ private fun AiToolRow(
     onManageModels: () -> Unit,
 ) {
     val colors = LocalClearCutColors.current
+    val unavailable = com.novacut.editor.engine.AiToolRequirements.requirementFor(tool.id)?.availability ==
+        com.novacut.editor.engine.AiToolRequirements.Availability.DEPENDENCY_MISSING
     val expansionLabel = stringResource(if (expanded) R.string.ai_tools_details_expanded else R.string.ai_tools_details_collapsed)
     Surface(
         modifier = Modifier.fillMaxWidth().animateContentSize(animationSpec = tween(Motion.DurationFast)),
@@ -191,9 +193,9 @@ private fun AiToolRow(
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(stringResource(tool.nameResId), color = colors.text, style = MaterialTheme.typography.titleSmall)
                     Text(stringResource(tool.descriptionResId), color = colors.subtext, style = MaterialTheme.typography.bodyMedium)
-                    if (isProcessing || !clipAvailable) {
+                    if (unavailable || isProcessing || !clipAvailable) {
                         Text(
-                            stringResource(if (isProcessing) R.string.ai_tool_status_running else R.string.ai_tools_select_clip),
+                            stringResource(if (unavailable) R.string.ai_tool_unavailable else if (isProcessing) R.string.ai_tool_status_running else R.string.ai_tools_select_clip),
                             color = if (isProcessing) colors.accent else colors.subtext,
                             style = MaterialTheme.typography.labelSmall,
                         )
@@ -208,7 +210,7 @@ private fun AiToolRow(
                 ) {
                     HorizontalDivider(color = colors.cardStroke)
                     Text(
-                        stringResource(if (clipAvailable) tool.readinessHintResId else R.string.ai_tool_locked_hint),
+                        stringResource(if (unavailable) R.string.ai_tool_unavailable_hint else if (clipAvailable) tool.readinessHintResId else R.string.ai_tool_locked_hint),
                         color = colors.subtext,
                         style = MaterialTheme.typography.bodyMedium,
                     )
@@ -216,14 +218,14 @@ private fun AiToolRow(
                         Text(stringResource(R.string.ai_tools_busy_hint), color = colors.subtext, style = MaterialTheme.typography.bodySmall)
                     }
                     ClearCutPrimaryButton(
-                        text = stringResource(if (clipAvailable) R.string.ai_tools_use_tool else R.string.ai_tools_select_clip),
+                        text = stringResource(if (unavailable) R.string.ai_tool_unavailable else if (clipAvailable) R.string.ai_tools_use_tool else R.string.ai_tools_select_clip),
                         onClick = if (clipAvailable) onRun else onSelectClip,
-                        enabled = !anyProcessing,
+                        enabled = !anyProcessing && !unavailable,
                         modifier = Modifier.fillMaxWidth().testTag("ai-tool-action-${tool.id}"),
                     )
-                    if (tool.readinessResId == R.string.ai_tool_status_whisper ||
+                    if (!unavailable && (tool.readinessResId == R.string.ai_tool_status_whisper ||
                         tool.readinessResId == R.string.ai_tool_status_fallback ||
-                        tool.readinessResId == R.string.ai_tool_status_model_gated
+                        tool.readinessResId == R.string.ai_tool_status_model_gated)
                     ) {
                         TextButton(onClick = onManageModels, modifier = Modifier.fillMaxWidth()) {
                             Text(stringResource(R.string.ai_tools_manage_models))
