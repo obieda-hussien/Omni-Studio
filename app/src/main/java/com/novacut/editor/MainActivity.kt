@@ -159,8 +159,12 @@ class MainActivity : ComponentActivity() {
                     pendingEditorOpen = null
                 }
 
-                val navigationDirection = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1 else 1
-                CompositionLocalProvider(LocalTabletopPosture provides isTabletopPosture) {
+                // The shipped UI languages (English and Spanish) both use LTR.
+                val navigationDirection = 1
+                CompositionLocalProvider(
+                    LocalTabletopPosture provides isTabletopPosture,
+                    LocalLayoutDirection provides LayoutDirection.Ltr,
+                ) {
                     NavHost(
                         navController = navController,
                         startDestination = "projects",

@@ -46,10 +46,10 @@ internal object CapabilityRegistryGenerated {
         CapabilityRecord(
             id = "frame_interpolation",
             name = "Frame Interpolation",
-            engine = "Planned: RIFE v4.6 requires the NCNN dependency",
-            onDevice = "Planned",
-            status = "planned",
-            reachability = "dependency_missing",
+            engine = "FFmpeg motion-compensated optical flow (full resolution; RIFE backend planned)",
+            onDevice = "Yes (built-in; no model download)",
+            status = "available",
+            reachability = "reachable",
         ),
         CapabilityRecord(
             id = "style_transfer",

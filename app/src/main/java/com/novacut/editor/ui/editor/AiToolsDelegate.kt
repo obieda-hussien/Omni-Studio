@@ -72,7 +72,8 @@ class AiToolsDelegate(
         "scene_detect",
         "stabilize",
         "track_motion",
-        "ai_stabilize"
+        "ai_stabilize",
+        "frame_interp",
     )
 
     private val visualRequiredTools = setOf(
@@ -396,6 +397,7 @@ class AiToolsDelegate(
 
     private fun getToolCompatibilityMessage(toolId: String, clip: Clip): String? {
         return when {
+            toolId == "frame_interp" && clip.sourceColorMetadata.hasHdr -> text(R.string.ai_frame_interp_hdr_unsupported)
             toolId in audioRequiredTools && !videoEngine.hasAudioTrack(clip.sourceUri) -> {
                 if (toolId == "auto_captions") {
                     text(R.string.ai_auto_captions_audio_required_toast)
@@ -934,10 +936,10 @@ class AiToolsDelegate(
     private fun resolveAiModelRequirement(toolId: String): AiToolRequirements.ToolRequirement? {
         val requirement = AiToolRequirements.requirementFor(toolId) ?: return null
         val availability = when (toolId) {
-            "frame_interp" -> if (frameInterpolationEngine.isModelReady()) {
+            "frame_interp" -> if (frameInterpolationEngine.isAvailable()) {
                 AiToolRequirements.Availability.READY
             } else {
-                requirement.availability
+                AiToolRequirements.Availability.DEPENDENCY_MISSING
             }
             "object_remove" -> if (inpaintingEngine.isModelReady()) {
                 AiToolRequirements.Availability.READY
@@ -1009,7 +1011,39 @@ class AiToolsDelegate(
     // --- Tier 3: ML Engine Wrapper Methods ---
 
     private suspend fun applyFrameInterpolation(clip: Clip) {
-        showAiRequirementPrompt(toolId = "frame_interp")
+        val output = withContext(Dispatchers.IO) {
+            File.createTempFile("omni-motion-", ".mp4", managedMediaDir(appContext).also { it.mkdirs() })
+        }
+        var retained = false
+        val processingJob = kotlinx.coroutines.currentCoroutineContext()[Job]
+        try {
+            val success = frameInterpolationEngine.smoothMotion(clip.sourceUri, output, clip.sourceDurationMs) { progress ->
+                if (aiJob === processingJob) stateFlow.update { it.copyAi { ai -> ai.copy(processingProgress = progress) } }
+            }
+            if (!success) {
+                showToast(text(R.string.ai_frame_interp_failed))
+                return
+            }
+            // Never replace media underneath edits made while the native job was running.
+            val location = stateFlow.value.tracks.findClipLocation(clip.id)
+            if (location == null || location.clip != clip || location.track.isLocked) {
+                showToast(text(R.string.ai_frame_interp_clip_changed))
+                return
+            }
+            saveUndoState("Smooth motion")
+            stateFlow.update { state -> state.copy(tracks = state.tracks.map { track ->
+                track.copy(clips = track.clips.map { c ->
+                    if (c.id == clip.id) c.copy(sourceUri = Uri.fromFile(output), proxyUri = null, sourceColorMetadata = SourceColorMetadata()) else c
+                })
+            }) }
+            retained = true
+            rebuildPlayerTimeline()
+            saveProject()
+            recordAiUsageForClip(clip, AiUsageLedger.EffectKind.FRAME_INTERPOLATION_LOCAL, "FFmpeg MCI")
+            showToast(text(R.string.ai_frame_interp_applied))
+        } finally {
+            if (!retained) withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) { output.delete() }
+        }
     }
 
     private suspend fun applyObjectRemoval(clip: Clip) {

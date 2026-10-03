@@ -192,6 +192,54 @@ class FFmpegEngine @Inject constructor(
         false
     }
 
+    /** Query the packaged filter list, so a reduced native build cannot advertise a missing filter. */
+    suspend fun supportsMotionInterpolation(): Boolean {
+        cachedMotionInterpolation?.let { return it }
+        if (!isAvailable()) return false
+        val present = suspendCancellableCoroutine<Boolean> { continuation ->
+            val session = FFmpegKit.executeWithArgumentsAsync(
+                arrayOf("-hide_banner", "-filters"),
+                { completed ->
+                    val available = completed.getOutput().orEmpty().lineSequence().any { line ->
+                        line.trim().split(Regex("\\s+")).getOrNull(1) == "minterpolate"
+                    }
+                    if (continuation.isActive) continuation.resume(available)
+                }, null, null,
+            )
+            continuation.invokeOnCancellation { session.cancel() }
+        }
+        cachedMotionInterpolation = present
+        return present
+    }
+
+    @Volatile private var cachedMotionInterpolation: Boolean? = null
+
+    /** Full-resolution, same-duration MCI output with optional audio and encoder fallback. */
+    suspend fun interpolateMotion(
+        inputUri: Uri, outputFile: File, sourceDurationMs: Long, targetFps: Int,
+        onProgress: (Float) -> Unit = {},
+    ): Boolean = withContext(Dispatchers.IO) {
+        val violation = NativeProcessingPolicy.validateVideoUri(context, inputUri, "interpolateMotion")
+        if (violation != null) return@withContext NativeProcessingPolicy.logAndReject(violation)
+        val sourceHasAudio = hasUsableTrack(inputUri, "audio/")
+        val filter = motionInterpolationFilter(targetFps, sourceDurationMs)
+        outputFile.parentFile?.mkdirs()
+        for (encoder in encoderAttempts(preferredIntermediateEncoder())) {
+            outputFile.delete()
+            val code = executeArguments(buildList {
+                addAll(listOf("-y", "-filter_threads", "2", "-i", ffmpegInput(inputUri)))
+                addAll(listOf("-map", "0:v:0", "-map", "0:a:0?", "-vf", filter))
+                addAll(listOf("-c:v", encoder.ffmpegName))
+                addAll(intermediateQualityArgs(encoder))
+                addAll(listOf("-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", outputFile.absolutePath))
+            }, progressDurationMs = sourceDurationMs, onProgress = onProgress)
+            if (code == 0 && hasUsableTrack(outputFile, "video/") &&
+                (!sourceHasAudio || hasUsableTrack(outputFile, "audio/"))) return@withContext true
+        }
+        outputFile.delete()
+        false
+    }
+
     /**
      * Extract audio from video to PCM WAV for processing.
      */

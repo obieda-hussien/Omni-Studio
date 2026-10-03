@@ -1181,7 +1181,8 @@ fun EditorScreen(
                                 onMarkerTapped = { marker -> viewModel.seekTo(marker.timeMs) },
                                 onClipLongPress = viewModel::toggleClipMultiSelect,
                                 onOpenCompoundClip = viewModel::openCompoundClip,
-                                onSlideClip = viewModel::slideClip,
+                                onSlideClip = viewModel::moveClip,
+                                onClipTimingChanged = viewModel::setClipTiming,
                                 onSlipClip = viewModel::slipClip,
                                 onSlideEditStarted = {
                                     isTimelineEditGestureActive = true

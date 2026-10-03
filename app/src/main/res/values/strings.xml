@@ -1446,7 +1446,7 @@
     <string name="tool_style_transfer">Style\nTransfer</string>
     <string name="tool_object_remove">Object\nRemove</string>
     <string name="tool_upscale_4k">Upscale\n4K</string>
-    <string name="tool_frame_interp">Frame\nInterp</string>
+    <string name="tool_frame_interp">Smooth motion</string>
     <string name="tool_ai_upscale">AI\nUpscale</string>
     <string name="tool_ai_background">AI\nBackground</string>
     <string name="tool_ai_stabilize">AI\nStabilize</string>
@@ -3693,4 +3693,21 @@
         <item quantity="one">%1$d tool</item>
         <item quantity="other">%1$d tools</item>
     </plurals>
+
+    <string name="timeline_edit_timing">Timing</string>
+    <string name="timeline_start_seconds">Start (seconds)</string>
+    <string name="timeline_duration_seconds">Duration (seconds)</string>
+    <string name="timeline_timing_help">Enter an exact start and duration. Images can be extended; video and audio stop at the source end. Other clips keep their duration.</string>
+    <string name="timeline_gesture_hint">Swipe to browse · Hold to move · Drag edges to trim</string>
+    <string name="timeline_timing_summary">Start %1$s s · Duration %2$s s</string>
+    <string name="timeline_timing_constrained">Timing adjusted to fit the source and available space on the track.</string>
+
+    <string name="timeline_apply_timing">Apply</string>
+    <string name="ai_frame_interp_hint">Generate smoother motion on this device using optical flow. No model download. Keeps the original duration, resolution and audio; processing may take time.</string>
+    <string name="ai_frame_interp_failed">Could not smooth this video. Use an SDR video below 120 fps with a working motion-interpolation backend.</string>
+    <string name="ai_frame_interp_clip_changed">The clip changed during processing. Run smoothing again to use the latest edit.</string>
+    <string name="ai_frame_interp_applied">Motion smoothing applied. Original timing and audio kept.</string>
+    <string name="ai_tool_unavailable">Coming later</string>
+    <string name="ai_tool_unavailable_hint">This tool is not included in this version. Choose an available tool to continue editing.</string>
+    <string name="ai_frame_interp_hdr_unsupported">Motion smoothing currently supports SDR video. Your HDR source has been kept unchanged.</string>
 </resources>

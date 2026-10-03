@@ -70,9 +70,40 @@ class TimelineDirectionLayoutTest {
         assertEquals(ltrBounds.right, rtlBounds.right, 0.5f)
         compose.onNodeWithTag(tag).performTouchInput {
             val start = center
-            swipe(start, start + Offset(48f, 0f), 300L)
+            down(start)
+            advanceEventTime(650L)
+            moveTo(start + Offset(48f, 0f))
+            up()
         }
         compose.runOnIdle { assertTrue("Rightward drag must advance clip time", slideDelta > 0L) }
+    }
+
+    @Test fun ordinarySwipeBrowsesWithoutMovingTheSelectedClip() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val engine = EntryPointAccessors.fromApplication(context, TimelineTestDependencies::class.java).videoEngine()
+        var scroll by mutableStateOf(1000L)
+        var moveCount = 0
+        val clip = Clip(id = "pan-clip", sourceUri = Uri.parse("content://test/audio"),
+            sourceDurationMs = 8000L, timelineStartMs = 1500L, trimEndMs = 4000L)
+        compose.setContent {
+            ClearCutTheme {
+                Timeline(
+                    tracks = listOf(Track(id = "audio", type = TrackType.AUDIO, index = 0, clips = listOf(clip))),
+                    playheadMs = 0, totalDurationMs = 12000, zoomLevel = 0.4f, scrollOffsetMs = scroll,
+                    selectedClipId = clip.id, onClipSelected = { _, _ -> }, onPlayheadMoved = {},
+                    onZoomChanged = {}, onScrollChanged = { scroll = it },
+                    onSlideClip = { _, _ -> moveCount++ }, engine = engine, compactLayout = true,
+                    modifier = Modifier.width(360.dp).height(320.dp),
+                )
+            }
+        }
+        compose.onNodeWithTag(ClearCutTestTags.TIMELINE_CLIP_PREFIX + clip.id).performTouchInput {
+            swipe(center, center + Offset(48f, 0f), 300L)
+        }
+        compose.runOnIdle {
+            assertEquals(0, moveCount)
+            assertTrue("A normal swipe should pan", scroll < 1000L)
+        }
     }
 
     @Test fun landscapeKeepsPreviewTimelineAndToolsInsideTheWorkspace() {

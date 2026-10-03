@@ -1375,6 +1375,7 @@ data class AutoSaveState(
                     clip.assetId?.let { put("assetId", it) }
                     put("sourceUri", clip.sourceUri.toString())
                     put("sourceDurationMs", clip.sourceDurationMs)
+                    put("isStillImage", clip.isStillImage)
                     put("audioSyncOffsetMs", clip.audioSyncOffsetMs)
                     put("trimStartMs", clip.trimStartMs)
                     put("trimEndMs", clip.trimEndMs)
@@ -1385,6 +1386,7 @@ data class AutoSaveState(
                 clip.assetId?.let { put("assetId", it) }
                 put("sourceUri", clip.sourceUri.toString())
                 put("sourceDurationMs", clip.sourceDurationMs)
+                put("isStillImage", clip.isStillImage)
                 put("timelineStartMs", clip.timelineStartMs)
                 put("audioSyncOffsetMs", clip.audioSyncOffsetMs)
                 put("trimStartMs", clip.trimStartMs)
@@ -1881,6 +1883,7 @@ data class AutoSaveState(
                 assetId = json.optString("assetId", "").takeIf { it.isNotEmpty() },
                 sourceUri = parsedSourceUri,
                 sourceDurationMs = sourceDurationMs.coerceAtLeast(trimEndMs),
+                isStillImage = json.optBoolean("isStillImage", false),
                 timelineStartMs = json.optLong("timelineStartMs", 0L).coerceAtLeast(0L),
                 audioSyncOffsetMs = clampClipAudioSyncOffsetMs(json.optLong("audioSyncOffsetMs", 0L)),
                 trimStartMs = trimStartMs,

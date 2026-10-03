@@ -188,6 +188,10 @@ class ClipEditingDelegate(
         }
     }
 
+    private fun isStillImageUri(uri: Uri): Boolean =
+        runCatching { appContext.contentResolver.getType(uri) }.getOrNull()?.startsWith("image/") == true ||
+            uri.lastPathSegment?.substringAfterLast('.')?.lowercase() in setOf("jpg", "jpeg", "png", "webp", "heic", "heif", "bmp", "gif")
+
     private suspend fun readMediaInfo(uri: Uri): ImportedMediaInfo = withContext(Dispatchers.IO) {
         ImportedMediaInfo(
             durationMs = videoEngine.getMediaDuration(uri),
@@ -220,6 +224,7 @@ class ClipEditingDelegate(
             trimEndMs = mediaInfo.durationMs,
             linkedClipId = prepared.linkedAudioClipId,
             sourceColorMetadata = mediaInfo.sourceColorMetadata,
+            isStillImage = isStillImageUri(prepared.item.uri),
         )
 
         var tracks = baseTracks.mapIndexed { index, candidate ->
@@ -350,6 +355,12 @@ class ClipEditingDelegate(
 
     // --- Select Clip ---
     fun selectClip(clipId: String?, trackId: String? = null) {
+        val selected = stateFlow.value.tracks.findClipLocation(clipId ?: "")?.clip
+        if (selected != null && !selected.isStillImage && isStillImageUri(selected.sourceUri)) {
+            stateFlow.update { s -> s.copy(tracks = s.tracks.map { track ->
+                track.copy(clips = track.clips.map { if (it.id == clipId) it.copy(isStillImage = true) else it })
+            }) }
+        }
         stateFlow.update { s ->
             val newSelectedIds = if (clipId != null) {
                 val allClips = s.tracks.flatMap { it.clips }
@@ -789,8 +800,18 @@ class ClipEditingDelegate(
         val targetIds = linkedClipIds(stateFlow.value.tracks, clipId)
         if (tracksContainLockedClip(targetIds)) return
         val currentTracks = stateFlow.value.tracks
+        // Older projects predate the still-image flag; resolve their MIME type once on edit.
+        val clip = currentTracks.findClipLocation(clipId)?.clip ?: return
+        val editableTracks = if (clip.isStillImage || isStillImageUri(clip.sourceUri)) {
+            currentTracks.map { track -> track.copy(clips = track.clips.map { current ->
+                if (current.id == clipId) current.copy(
+                    isStillImage = true,
+                    sourceDurationMs = maxOf(current.sourceDurationMs, (newTrimEndMs ?: 0L).coerceAtMost(MAX_STILL_IMAGE_DURATION_MS)),
+                ) else current
+            }) }
+        } else currentTracks
         val rawCandidateTracks = trimLinkedClipsOnTimeline(
-            tracks = currentTracks,
+            tracks = editableTracks,
             anchorClipId = clipId,
             targetClipIds = targetIds,
             requestedTrimStartMs = newTrimStartMs,
@@ -799,14 +820,14 @@ class ClipEditingDelegate(
         val rawCandidate = rawCandidateTracks.findClipLocation(clipId)?.clip
         val candidateTracks = when {
             newTrimStartMs != null && rawCandidate != null -> trimLinkedClipStartToTimelineTime(
-                currentTracks,
+                editableTracks,
                 clipId,
                 targetIds,
                 quantizeTimeMs(rawCandidate.timelineStartMs),
                 stateFlow.value.project.timelineTimebase,
             )
             newTrimEndMs != null && rawCandidate != null -> trimLinkedClipEndToTimelineTime(
-                currentTracks,
+                editableTracks,
                 clipId,
                 targetIds,
                 quantizeTimeMs(rawCandidate.timelineEndMs),
@@ -939,11 +960,14 @@ class ClipEditingDelegate(
         sourceColorMetadata: SourceColorMetadata
     ): Clip {
         if (sourceDurationMs <= 0L) return copy(sourceUri = newUri, sourceDurationMs = sourceDurationMs, sourceColorMetadata = sourceColorMetadata)
-        val safeTrimStart = trimStartMs.coerceIn(0L, sourceDurationMs - 1L)
-        val safeTrimEnd = trimEndMs.coerceIn(safeTrimStart + 1L, sourceDurationMs)
+        val stillImage = isStillImageUri(newUri)
+        val effectiveDuration = if (stillImage) maxOf(sourceDurationMs, trimEndMs) else sourceDurationMs
+        val safeTrimStart = trimStartMs.coerceIn(0L, effectiveDuration - 1L)
+        val safeTrimEnd = trimEndMs.coerceIn(safeTrimStart + 1L, effectiveDuration)
         return copy(
             sourceUri = newUri,
-            sourceDurationMs = sourceDurationMs,
+            sourceDurationMs = effectiveDuration,
+            isStillImage = stillImage,
             trimStartMs = safeTrimStart,
             trimEndMs = safeTrimEnd,
             proxyUri = null,

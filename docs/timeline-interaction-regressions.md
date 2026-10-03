@@ -83,3 +83,60 @@ Device review checklist (Arabic device + English app, and English device):
    the finger, then auto-follow resumes after release.
 6. Rotate with selected clips, trim controls, multiple tracks, and expanded
    tools. Verify preview and tool access, then enter/exit fullscreen preview.
+
+## Arrangement and precise timing (October 2026)
+
+- Swipe the clip body to browse the timeline. Hold it to begin a move; the
+  haptic cue marks when editing owns the gesture. Tap first to select a clip,
+  then drag either visible edge to trim immediately. Trim-mode body holds
+  retain slip editing.
+- Moves place identity-linked media in legal gaps on their existing tracks.
+  They never trim neighbouring clips. Collision boundaries are resolved on
+  the project frame grid; a locked linked member blocks the entire move.
+- Selected clips show their start and duration. **Timing** accepts decimal
+  seconds, including Arabic numerals, and updates position and duration in
+  one undo entry. Source limits and occupied track space can constrain the
+  requested result; the editor explains that adjustment.
+- A still-image flag is persisted with each clip. Images may extend beyond
+  the default import duration; audio/video remain bounded by the source.
+  Legacy images are recognized when selected, and relinking an image keeps
+  its presentation duration.
+- Holding near a horizontal edge scrolls the viewport continuously, even
+  without another pointer movement. The frame loop adjusts the edit by the
+  actual bounded scroll delta. It ends on release, cancellation or disposal.
+- Compact tracks use 88 dp for video, 80 dp for audio and 72 dp for overlays,
+  unless a larger explicit track height is stored.
+- English and Spanish app surfaces remain LTR on Arabic devices, including
+  AI tool cards and dialogs.
+
+## Motion smoothing availability
+
+**Smooth motion** now uses the bundled FFmpeg `minterpolate` optical-flow
+filter. Its native filter list is checked before processing. No RIFE model
+or download is claimed. Smoothing renders a new managed file, retains full
+resolution and source timing, maps optional source audio, and uses the
+existing hardware/software encoder fallback. End padding prevents MCI from
+losing the final video frames. Progress and cancellation use the existing
+AI-task UI. Failed, cancelled and stale results are deleted; source media is
+replaced only if the clip has not changed during the job. The operation is
+undoable. Known HDR sources are rejected to avoid an implicit SDR conversion. Sources
+reported at 120 fps or higher are rejected to avoid a frame-rate reduction.
+Other tools with missing backends show **Coming later** and cannot start a
+job. The neural RIFE backend remains planned.
+
+Validation for this change:
+
+- 40 focused JVM tests passed against Kotlin 2.4.10 using lightweight Android
+  and annotation stubs for model-only tests.
+- The FFmpeg and interpolation engines compile against the packaged FFmpegKit
+  API and Android framework classes, with logging/injection stubs.
+- The new pointer detector compiles against Compose Foundation 1.12.1, and
+  the timing dialog compiles with the Compose compiler plugin.
+- Added device tests for hold-to-move, swipe-to-browse, precise timing,
+  Arabic numeric entry and invalid timing. These have not run on a device.
+- A desktop FFmpeg smoke test converted a two-second 320x180/30 fps source
+  into 120 frames at 60 fps, retaining the video duration, resolution and
+  audio stream. This checks the filter chain, not Android codec behavior.
+- `minterpolate` is present in the packaged ARM64 native FFmpeg library.
+- Full Android compilation, device gestures and codec execution remain CI
+  and device checks; local Gradle wrapper download was blocked by networking.
