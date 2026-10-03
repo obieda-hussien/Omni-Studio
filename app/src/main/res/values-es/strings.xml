@@ -3455,4 +3455,5 @@
     <string name="ai_neural_frame_count">La fuente es demasiado larga. Usa una fuente más corta; el límite es de 3600 fotogramas de salida.</string>
     <string name="ai_neural_cadence">Esta tasa no es compatible. RIFE admite fuentes de hasta 60 fps.</string>
     <string name="ai_neural_model_invalid">Falló la verificación. Descarga el modelo de nuevo en Modelos y configuración.</string>
+    <string name="ai_neural_memory">No hay memoria libre suficiente. Usa una fuente más pequeña o la herramienta Movimiento fluido integrada.</string>
 </resources>

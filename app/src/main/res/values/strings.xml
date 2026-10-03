@@ -3730,4 +3730,5 @@
     <string name="ai_neural_frame_count">This source is too long for neural processing. Use a shorter source; the limit is 3,600 output frames.</string>
     <string name="ai_neural_cadence">This frame rate cannot use this neural tool. RIFE supports source rates up to 60 fps.</string>
     <string name="ai_neural_model_invalid">Model verification failed. Download the model again in Models &amp; setup.</string>
+    <string name="ai_neural_memory">Not enough free memory for this neural operation. Use a smaller source or the built-in Smooth motion tool.</string>
 </resources>

@@ -139,7 +139,7 @@ The table below is generated-contract content and intentionally mirrors `scripts
 ```
 com.novacut.editor/
 ├── ai/                     # AI features (captions, scene detect, stabilize, auto-edit)
-├── engine/                 # Core engines (80 injectable singletons across 207 files)
+├── engine/                 # Core engines (80 injectable singletons across 208 files)
 │   ├── VideoEngine          # Media3 playback + export
 │   ├── AudioEngine          # Waveform extraction + PCM processing
 │   ├── AudioEffectsEngine   # DSP chain (EQ, compressor, chorus, etc.)

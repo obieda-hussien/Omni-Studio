@@ -12,6 +12,7 @@ Both models have immutable source revisions and exact SHA-256 pins in [models.md
 
 - RIFE: SDR motion video up to 921,600 input pixels, at most 1280 pixels on either side, source cadence up to 60 fps. Portrait 720x1280 is supported.
 - Upscale: 2x video output up to 1920x1080 pixels by area; 2x still output up to 4096x4096 pixels. The longest output edge is bounded to 4096.
+- Working allocations are checked against live Java heap and system-memory headroom before decoding or inference. Low-memory devices receive an explicit message; the app does not attempt oversized native activations.
 - All frame pipelines: at most 3,600 output frames and 1 GiB temporary frame storage. The preflight reserves worst-case PNG bytes plus space for the final encode and a 128 MiB free-space margin. A job exceeding these limits is rejected in full, rather than truncated or silently downscaled.
 - The neural tools reject known HDR at the editor gate and also inspect encoded color transfer in the video engine. SDR output does not inherit obsolete source color metadata.
 - Decode keeps only two source frames and one rendered frame resident. RIFE uses edge-repeat padding to multiples of 32 and crops the result. Identical inputs bypass inference. Still-image decoding checks dimensions before allocating and applies EXIF orientation.

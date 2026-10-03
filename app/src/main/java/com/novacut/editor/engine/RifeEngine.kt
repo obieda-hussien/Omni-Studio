@@ -15,7 +15,7 @@ import kotlin.coroutines.coroutineContext
 /** Practical-RIFE 4.9, ONNX export. No Vulkan/NCNN requirement or extra native binary. */
 @Singleton
 class RifeEngine @Inject constructor(
-    @ApplicationContext context: Context,
+    @ApplicationContext private val context: Context,
     downloads: ModelDownloadManager,
     private val video: NeuralVideoProcessor,
 ) {
@@ -36,6 +36,9 @@ class RifeEngine @Inject constructor(
     suspend fun interpolateVideo(uri: Uri, output: File, progress: (Float) -> Unit): Boolean {
         val source = video.source(uri)
         NeuralMediaPolicy.requireDimensions(source.width, source.height, 1, NeuralMediaPolicy.MAX_RIFE_PIXELS)
+        if (source.width > 1280 || source.height > 1280) throw NeuralMediaException(NeuralMediaException.Reason.DIMENSIONS)
+        val pixels = source.width.toLong() * source.height
+        requireNeuralMemory(context, pixels * 64 + 16L * 1024 * 1024, pixels * 512 + MODEL.bytes * 2)
         if (source.fps > 60) throw NeuralMediaException(NeuralMediaException.Reason.CADENCE)
         return model.withSession { environment, session ->
             require(session.inputNames == setOf("img0", "img1", "timestep"))

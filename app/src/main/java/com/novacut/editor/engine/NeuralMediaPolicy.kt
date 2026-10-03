@@ -6,7 +6,7 @@ import kotlin.math.min
 enum class NeuralModelState { NOT_DOWNLOADED, DOWNLOADING, READY, ERROR }
 
 class NeuralMediaException(val reason: Reason) : Exception(reason.name) {
-    enum class Reason { DIMENSIONS, STORAGE, FRAME_COUNT, CADENCE, MODEL, HDR }
+    enum class Reason { DIMENSIONS, STORAGE, FRAME_COUNT, CADENCE, MODEL, HDR, MEMORY }
 }
 
 /** Reject oversized jobs before allocation; never silently shorten or resize the source. */
@@ -17,6 +17,13 @@ object NeuralMediaPolicy {
     const val MAX_FRAMES = 3600
     const val MAX_SCRATCH_BYTES = 1024L * 1024 * 1024
     const val STORAGE_RESERVE_BYTES = 128L * 1024 * 1024
+
+    fun requireMemory(heapBytes: Long, nativeBytes: Long, availableHeap: Long, availableSystem: Long) {
+        require(heapBytes > 0 && nativeBytes >= 0)
+        if (heapBytes > availableHeap || heapBytes + nativeBytes > availableSystem) {
+            throw NeuralMediaException(NeuralMediaException.Reason.MEMORY)
+        }
+    }
 
     /** Encoded timestamps retain 29.97/59.94 cadence when MediaFormat rounds its frame-rate hint. */
     fun sourceFrameRate(timestampsUs: List<Long>, hint: Double?): Double {

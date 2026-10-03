@@ -18,7 +18,7 @@ import kotlin.coroutines.coroutineContext
 /** Real-ESRGAN's compact x4v3 model, with bounded tiles instead of whole-frame activations. */
 @Singleton
 class UpscaleEngine @Inject constructor(
-    @ApplicationContext context: Context,
+    @ApplicationContext private val context: Context,
     downloads: ModelDownloadManager,
     private val video: NeuralVideoProcessor,
 ) {
@@ -38,12 +38,14 @@ class UpscaleEngine @Inject constructor(
 
     suspend fun upscaleFrame(bitmap: Bitmap, onProgress: (Float) -> Unit = {}): Bitmap {
         NeuralMediaPolicy.requireDimensions(bitmap.width, bitmap.height, 2, NeuralMediaPolicy.MAX_IMAGE_OUTPUT_PIXELS)
+        requireNeuralMemory(context, bitmap.width.toLong() * bitmap.height * 20 + 32L * 1024 * 1024, 192L * 1024 * 1024)
         return model.withSession { environment, session -> upscale(environment, session, bitmap, onProgress) }
     }
 
     suspend fun upscaleVideo(uri: Uri, output: File, onProgress: (Float) -> Unit = {}): Boolean {
         val source = video.source(uri)
         NeuralMediaPolicy.requireDimensions(source.width, source.height, 2, NeuralMediaPolicy.MAX_VIDEO_OUTPUT_PIXELS)
+        requireNeuralMemory(context, source.width.toLong() * source.height * 20 + 32L * 1024 * 1024, 192L * 1024 * 1024)
         return model.withSession { environment, session ->
             video.render(uri, output, source, 1, 2, onProgress) { frame, _, _ ->
                 upscale(environment, session, frame) {}

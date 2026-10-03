@@ -13,6 +13,7 @@ fun decodeNeuralImage(context: Context, uri: Uri): Bitmap {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeStream(stream, null, bounds)
         NeuralMediaPolicy.requireDimensions(bounds.outWidth, bounds.outHeight, 2, NeuralMediaPolicy.MAX_IMAGE_OUTPUT_PIXELS)
+        requireNeuralMemory(context, bounds.outWidth.toLong() * bounds.outHeight * 20 + 32L * 1024 * 1024, 192L * 1024 * 1024)
     } ?: error("Cannot read image")
     val orientation = runCatching {
         context.contentResolver.openInputStream(uri)?.use {

@@ -1264,6 +1264,7 @@ class AiToolsDelegate(
                 NeuralMediaException.Reason.CADENCE -> R.string.ai_neural_cadence
                 NeuralMediaException.Reason.MODEL -> R.string.ai_neural_model_invalid
                 NeuralMediaException.Reason.HDR -> R.string.ai_frame_interp_hdr_unsupported
+                NeuralMediaException.Reason.MEMORY -> R.string.ai_neural_memory
             }))
         } finally {
             if (!retained) withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) { output.delete() }

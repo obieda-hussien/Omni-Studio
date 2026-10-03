@@ -4,6 +4,11 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class NeuralMediaPolicyTest {
+    @Test fun memoryChecksBothHeapAndNativeHeadroomBeforeAllocation() {
+        NeuralMediaPolicy.requireMemory(100, 200, 100, 300)
+        assertReason(NeuralMediaException.Reason.MEMORY) { NeuralMediaPolicy.requireMemory(100, 200, 99, 300) }
+        assertReason(NeuralMediaException.Reason.MEMORY) { NeuralMediaPolicy.requireMemory(100, 200, 100, 299) }
+    }
     @Test fun encodedTimestampsRecoverFractionalCadenceAndTolerateReorderedFrames() {
         val timestamps = (0 until 96).map { (it * 1_000_000.0 / (30000.0 / 1001)).toLong() }
         assertEquals(30000.0 / 1001, NeuralMediaPolicy.sourceFrameRate(timestamps.reversed(), 30.0), 1e-9)
