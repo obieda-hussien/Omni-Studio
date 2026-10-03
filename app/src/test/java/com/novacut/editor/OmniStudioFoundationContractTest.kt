@@ -1,6 +1,7 @@
 package com.novacut.editor
 
 import java.io.File
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -72,7 +73,7 @@ class OmniStudioFoundationContractTest {
         assertTrue(workflow.contains(":app:lintRelease"))
         assertTrue(workflow.contains(":app:assembleRelease"))
         assertTrue(workflow.contains(":app:bundleRelease"))
-        assertTrue(workflow.contains("omni-studio-release-unsigned"))
+        assertFalse(workflow.contains("name: omni-studio-release-unsigned"))
         assertFalse(workflow.contains(":app:assembleDebug"))
         assertFalse(workflow.contains("omni-studio-debug-apks"))
 
@@ -82,6 +83,33 @@ class OmniStudioFoundationContractTest {
             build.substringAfter("release {").substringBefore("create(\"streaming\")")
                 .contains("signingConfigs.getByName(\"debug\")")
         )
+    }
+
+    @Test
+    fun ciUploadsEachApkAndBundleAsSeparateDownloads() {
+        val workflow = locate(".github/workflows/ci.yml").readText()
+        val uploads = workflow.split(Regex("(?m)^      - name: "))
+            .filter { it.contains("uses: actions/upload-artifact@") }
+        val expectedPaths = listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64", "universal")
+            .associate { abi ->
+                "omni-studio-apk-$abi-release-unsigned" to
+                    "app/build/outputs/apk/release/*-$abi-*.apk"
+            } + mapOf(
+                "omni-studio-aab-release-unsigned" to "app/build/outputs/bundle/release/*.aab"
+            )
+
+        expectedPaths.forEach { (artifactName, expectedPath) ->
+            val matches = uploads.filter {
+                Regex("(?m)^          name: ${Regex.escape(artifactName)}$").containsMatchIn(it)
+            }
+            assertEquals("Exactly one upload must own $artifactName", 1, matches.size)
+            val upload = matches.single()
+            val paths = Regex("(?m)^          path: (.+)$").findAll(upload)
+                .map { it.groupValues[1].trim() }.toList()
+            assertEquals("$artifactName must contain only its build output", listOf(expectedPath), paths)
+            assertTrue("Missing release output must fail CI", upload.contains("if-no-files-found: error"))
+        }
+        assertTrue(uploads.any { it.contains("name: omni-studio-release-signing-notice") })
     }
 
     private fun locate(relativePath: String): File =

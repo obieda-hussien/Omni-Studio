@@ -48,13 +48,18 @@ internal fun TimelineOverviewBar(
     playheadMs: Long,
     tracks: List<Track>,
     contentPadding: Dp,
-    onScrollTo: (Long) -> Unit
+    onScrollTo: (Long) -> Unit,
+    onScrollStarted: () -> Unit = {},
+    onScrollEnded: () -> Unit = {},
 ) {
     val semanticColors = LocalClearCutColors.current
-    val overviewHeight = 22.dp
+    val overviewHeight = 48.dp
     var widthPx by remember { mutableFloatStateOf(0f) }
     val overviewContentDescription = stringResource(R.string.cd_timeline_overview)
 
+    val currentOnScrollStarted by rememberUpdatedState(onScrollStarted)
+    val currentOnScrollEnded by rememberUpdatedState(onScrollEnded)
+    val currentOnScrollTo by rememberUpdatedState(onScrollTo)
     val currentTotalDurationMs by rememberUpdatedState(totalDurationMs)
     val currentVisibleDurationMs by rememberUpdatedState(visibleDurationMs)
     val currentScrollOffsetMs by rememberUpdatedState(scrollOffsetMs)
@@ -81,13 +86,35 @@ internal fun TimelineOverviewBar(
             .semantics { contentDescription = overviewContentDescription }
             .pointerInput(Unit) {
                 detectTapGestures { offset ->
-                    onScrollTo(tapXToScrollOffset(offset.x))
+                    currentOnScrollTo(tapXToScrollOffset(offset.x))
                 }
             }
             .pointerInput(Unit) {
-                detectHorizontalDragGestures { change, _ ->
-                    onScrollTo(tapXToScrollOffset(change.position.x))
-                }
+                var dragStartOffsetMs = 0L
+                var accumulatedDragPx = 0f
+                detectHorizontalDragGestures(
+                    onDragStart = { position ->
+                        currentOnScrollStarted()
+                        accumulatedDragPx = 0f
+                        dragStartOffsetMs = timelineOverviewDragStartOffset(
+                            position.x, widthPx, currentTotalDurationMs,
+                            currentVisibleDurationMs, currentScrollOffsetMs,
+                        )
+                    },
+                    onDragEnd = { currentOnScrollEnded() },
+                    onDragCancel = { currentOnScrollEnded() },
+                    onHorizontalDrag = { change, delta ->
+                        accumulatedDragPx += delta
+                        if (widthPx > 0f && currentTotalDurationMs > 0L) {
+                            currentOnScrollTo((dragStartOffsetMs +
+                                accumulatedDragPx.toDouble() / widthPx * currentTotalDurationMs)
+                                .toLong().coerceIn(0L, maxTimelineViewportScrollMs(
+                                    currentTotalDurationMs, currentVisibleDurationMs,
+                                )))
+                        }
+                        change.consume()
+                    },
+                )
             }
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -134,17 +161,4 @@ internal fun TimelineOverviewBar(
             )
         }
     }
-}
-
-internal fun timelineOverviewScrollOffsetForTap(
-    xPx: Float,
-    widthPx: Float,
-    totalDurationMs: Long,
-    visibleDurationMs: Long,
-    currentScrollOffsetMs: Long
-): Long {
-    if (widthPx <= 0f || totalDurationMs <= 0L) return currentScrollOffsetMs
-    val fraction = (xPx / widthPx).coerceIn(0f, 1f)
-    val targetMs = (fraction * totalDurationMs).toLong()
-    return (targetMs - visibleDurationMs / 2).coerceAtLeast(0L)
 }

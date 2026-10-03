@@ -1,6 +1,7 @@
 package com.novacut.editor.ui.editor
 
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.File
 
@@ -17,14 +18,22 @@ class FullscreenPreviewContractTest {
         val systemUi = locate(
             "app/src/main/java/com/novacut/editor/ui/editor/ImmersivePreviewSystemUi.kt"
         ).readText().normalizeLineEndings()
+        val workspace = locate(
+            "app/src/main/java/com/novacut/editor/ui/editor/EditorPreviewTimelineLayout.kt"
+        ).readText().normalizeLineEndings()
 
         assertTrue(screen.contains("var isImmersivePreview by rememberSaveable"))
         assertTrue(screen.contains("val canConsumeEditorBack = isImmersivePreview ||"))
         assertTrue(screen.contains("PredictiveBackHandler(enabled = canConsumeEditorBack)"))
         assertTrue(screen.contains("isImmersivePreview ->"))
         assertTrue(screen.contains("isFullscreenPreview = isImmersivePreview"))
-        assertTrue(screen.contains("if (hasClips || hasOpenPanel || isImmersivePreview) Box"))
-        assertTrue(screen.contains("Modifier.fillMaxSize()"))
+        assertEquals("The workspace must own a single preview surface", 1, Regex("\\bPreviewPanel\\(").findAll(screen).count())
+        assertTrue(screen.contains("showPreview = hasClips || hasOpenPanel || isImmersivePreview"))
+        assertTrue(screen.contains("immersivePreview = isImmersivePreview"))
+        assertTrue(workspace.contains("if (sideBySide && showPreview && !immersivePreview)"))
+        assertTrue(workspace.contains("if (showPreview) preview(editorPreviewModifier(immersivePreview, previewMinHeight))"))
+        assertTrue(workspace.contains("if (!immersivePreview) editing("))
+        assertTrue(workspace.contains("Modifier = if (immersivePreview) {\n    Modifier.fillMaxSize()"))
         assertTrue(preview.contains("Icons.Default.Fullscreen"))
         assertTrue(preview.contains("Icons.Default.FullscreenExit"))
         assertTrue(preview.contains("onToggleFullscreenPreview"))

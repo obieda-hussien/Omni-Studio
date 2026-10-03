@@ -290,6 +290,7 @@ fun EditorScreen(
             desktopLike = layoutMode == LayoutMode.DESKTOP
         )
     }
+    val sideBySideWorkspace = useSideBySideEditor(configuration.screenWidthDp, configuration.screenHeightDp)
     val screenHeightDp = configuration.screenHeightDp
     val isCompactEditorHeight = adaptiveLayoutDecision.compactTimeline || screenHeightDp < 820
     // Preview-first sizing keeps frame-dependent edits from starving the video
@@ -891,355 +892,362 @@ fun EditorScreen(
                 }
             }
 
-            // Preview panel with long-press radial menu. The preview is the
-            // ONLY flexible element in this column: it absorbs whatever the
-            // wrap-content timeline and tool rail leave over, so the rail
-            // always hugs the bottom edge with no dead panel space.
-            if (hasClips || hasOpenPanel || isImmersivePreview) Box(
-                modifier = editorPreviewModifier(
-                    immersivePreview = isImmersivePreview,
-                    previewMinHeight = previewMinHeight,
-                )
-                    .pointerInput(Unit) {
-                        detectTapGestures(
-                            onLongPress = { offset ->
-                                if (!isImmersivePreview) {
-                                    radialMenuPosition = offset
-                                    showRadialMenu = true
-                                }
-                            }
-                        )
-                    }
-            ) {
-                PreviewPanel(
-                    engine = viewModel.engine,
-                    playheadMs = playheadMs,
-                    totalDurationMs = state.totalDurationMs,
-                    isPlaying = state.isPlaying,
-                    isPlaybackRequested = state.isPlaybackRequested,
-                    isLooping = state.isLooping,
-                    aspectRatio = state.project.aspectRatio,
-                    frameRate = state.project.frameRate,
-                    onTogglePlayback = viewModel::togglePlayback,
-                    onToggleLoop = viewModel::toggleLoop,
-                    onSeek = viewModel::seekTo,
-                    selectedClipId = state.selectedClipId,
-                    currentTimelineClip = previewClipAtPlayhead,
-                    nextTimelineClip = nextPreviewClip,
-                    imageOverlays = state.imageOverlays,
-                    textOverlays = state.textOverlays,
-                    onOpenMediaManager = viewModel::showMediaManager,
-                    jumpToContentMs = previewRecoveryTargetMs,
-                    onJumpToContent = viewModel::seekTo,
-                    onPreviewTransformStarted = { viewModel.beginTransformChange() },
-                    onPreviewTransformEnded = { viewModel.endTransformChange() },
-                    onPreviewTransformChanged = { dx, dy, scaleChange, rotationChange ->
-                        val clip = selectedClip ?: return@PreviewPanel
-                        viewModel.setClipTransform(
-                            clipId = clip.id,
-                            positionX = clip.positionX + dx / 500f,
-                            positionY = clip.positionY + dy / 500f,
-                            scaleX = (clip.scaleX * scaleChange),
-                            scaleY = (clip.scaleY * scaleChange),
-                            rotation = clip.rotation + rotationChange
-                        )
-                    },
-                    showScopesButton = true,
-                    onToggleScopes = viewModel::toggleScopes,
-                    showCompositionGuides = showCompositionGuides,
-                    onToggleCompositionGuides = { showCompositionGuides = !showCompositionGuides },
-                    isFullscreenPreview = isImmersivePreview,
-                    onToggleFullscreenPreview = {
-                        isImmersivePreview = !isImmersivePreview
-                        showRadialMenu = false
-                    },
-                    isSplitPreviewEnabled = state.isSplitPreviewEnabled,
-                    onToggleSplitPreview = viewModel::toggleSplitPreview,
-                    hasActiveEffects = selectedClip?.effects?.any { it.enabled } == true ||
-                        selectedClip?.colorGrade != null ||
-                        selectedClip?.flipHorizontal == true || selectedClip?.flipVertical == true,
-                    modifier = Modifier.fillMaxSize()
-                )
-
-                if (!isImmersivePreview && showRadialMenu) {
-                    RadialActionMenu(
-                        position = radialMenuPosition,
-                        hasClipSelected = isClipMode,
-                        hasOpenableCompoundClipSelected = selectedClip?.isCompound == true,
-                        onAction = { actionId ->
-                            showRadialMenu = false
-                            when (actionId) {
-                                "open_compound" -> selectedClip?.id?.let { viewModel.openCompoundClip(it) }
-                                "add_media" -> viewModel.showMediaPicker()
-                                "add_text" -> viewModel.showTextEditor()
-                                "add_audio" -> viewModel.showMediaPicker()
-                                "record" -> viewModel.showVoiceoverPanel()
-                                "snapshot" -> viewModel.createSnapshot()
-                                "split" -> viewModel.splitClipAtPlayhead()
-                                "duplicate" -> viewModel.duplicateSelectedClip()
-                                "effects" -> viewModel.showEffectsPanel()
-                                "speed" -> viewModel.showSpeedCurveEditor()
-                                "transform" -> viewModel.showTransformPanel()
-                                "delete" -> viewModel.deleteSelectedClip()
-                            }
-                        },
-                        onDismiss = { showRadialMenu = false }
-                    )
-                }
-            }
-
-            if (!isImmersivePreview) {
-                // Multi-select action bar
-                if (state.selectedClipIds.size > 1) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    color = Color.Transparent,
-                    shape = RoundedCornerShape(Radius.xl),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, ClearCutAccents.Peach.copy(alpha = 0.2f))
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(
-                                        ClearCutAccents.Peach.copy(alpha = 0.18f),
-                                        semanticColors.panelHighest.copy(alpha = 0.96f),
-                                        semanticColors.panel.copy(alpha = 0.98f)
-                                    )
+            EditorPreviewTimelineWorkspace(
+                showPreview = hasClips || hasOpenPanel || isImmersivePreview,
+                immersivePreview = isImmersivePreview,
+                sideBySide = sideBySideWorkspace,
+                previewMinHeight = previewMinHeight,
+                timelineMinHeight = timelineMinHeight,
+                timelineMaxHeight = timelineMaxHeight,
+                modifier = if (hasClips || hasOpenPanel || isImmersivePreview) {
+                    Modifier.fillMaxWidth().weight(1f)
+                } else Modifier.fillMaxWidth(),
+                preview = { previewModifier ->
+                    Box(
+                        modifier = previewModifier
+                            .pointerInput(Unit) {
+                                detectTapGestures(
+                                    onLongPress = { offset ->
+                                        if (!isImmersivePreview) {
+                                            radialMenuPosition = offset
+                                            showRadialMenu = true
+                                        }
+                                    }
                                 )
-                            )
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            }
                     ) {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.editor_selection),
-                                color = ClearCutAccents.Peach,
-                                style = MaterialTheme.typography.labelSmall
-                            )
-                            Text(
-                                text = stringResource(R.string.editor_selected_count, state.selectedClipIds.size),
-                                color = semanticColors.text,
-                                style = MaterialTheme.typography.titleSmall
+                        PreviewPanel(
+                            engine = viewModel.engine,
+                            playheadMs = playheadMs,
+                            totalDurationMs = state.totalDurationMs,
+                            isPlaying = state.isPlaying,
+                            isPlaybackRequested = state.isPlaybackRequested,
+                            isLooping = state.isLooping,
+                            aspectRatio = state.project.aspectRatio,
+                            frameRate = state.project.frameRate,
+                            onTogglePlayback = viewModel::togglePlayback,
+                            onToggleLoop = viewModel::toggleLoop,
+                            onSeek = viewModel::seekTo,
+                            selectedClipId = state.selectedClipId,
+                            currentTimelineClip = previewClipAtPlayhead,
+                            nextTimelineClip = nextPreviewClip,
+                            imageOverlays = state.imageOverlays,
+                            textOverlays = state.textOverlays,
+                            onOpenMediaManager = viewModel::showMediaManager,
+                            jumpToContentMs = previewRecoveryTargetMs,
+                            onJumpToContent = viewModel::seekTo,
+                            onPreviewTransformStarted = { viewModel.beginTransformChange() },
+                            onPreviewTransformEnded = { viewModel.endTransformChange() },
+                            onPreviewTransformChanged = { dx, dy, scaleChange, rotationChange ->
+                                val clip = selectedClip ?: return@PreviewPanel
+                                viewModel.setClipTransform(
+                                    clipId = clip.id,
+                                    positionX = clip.positionX + dx / 500f,
+                                    positionY = clip.positionY + dy / 500f,
+                                    scaleX = (clip.scaleX * scaleChange),
+                                    scaleY = (clip.scaleY * scaleChange),
+                                    rotation = clip.rotation + rotationChange
+                                )
+                            },
+                            showScopesButton = true,
+                            onToggleScopes = viewModel::toggleScopes,
+                            showCompositionGuides = showCompositionGuides,
+                            onToggleCompositionGuides = { showCompositionGuides = !showCompositionGuides },
+                            isFullscreenPreview = isImmersivePreview,
+                            onToggleFullscreenPreview = {
+                                isImmersivePreview = !isImmersivePreview
+                                showRadialMenu = false
+                            },
+                            isSplitPreviewEnabled = state.isSplitPreviewEnabled,
+                            onToggleSplitPreview = viewModel::toggleSplitPreview,
+                            hasActiveEffects = selectedClip?.effects?.any { it.enabled } == true ||
+                                selectedClip?.colorGrade != null ||
+                                selectedClip?.flipHorizontal == true || selectedClip?.flipVertical == true,
+                            modifier = Modifier.fillMaxSize()
+                        )
+
+                        if (!isImmersivePreview && showRadialMenu) {
+                            RadialActionMenu(
+                                position = radialMenuPosition,
+                                hasClipSelected = isClipMode,
+                                hasOpenableCompoundClipSelected = selectedClip?.isCompound == true,
+                                onAction = { actionId ->
+                                    showRadialMenu = false
+                                    when (actionId) {
+                                        "open_compound" -> selectedClip?.id?.let { viewModel.openCompoundClip(it) }
+                                        "add_media" -> viewModel.showMediaPicker()
+                                        "add_text" -> viewModel.showTextEditor()
+                                        "add_audio" -> viewModel.showMediaPicker()
+                                        "record" -> viewModel.showVoiceoverPanel()
+                                        "snapshot" -> viewModel.createSnapshot()
+                                        "split" -> viewModel.splitClipAtPlayhead()
+                                        "duplicate" -> viewModel.duplicateSelectedClip()
+                                        "effects" -> viewModel.showEffectsPanel()
+                                        "speed" -> viewModel.showSpeedCurveEditor()
+                                        "transform" -> viewModel.showTransformPanel()
+                                        "delete" -> viewModel.deleteSelectedClip()
+                                    }
+                                },
+                                onDismiss = { showRadialMenu = false }
                             )
                         }
+                    }
+
+                },
+                editing = { editingModifier, timelineModifier ->
+                    Column(modifier = editingModifier) {
+                        // Multi-select action bar
+                        if (state.selectedClipIds.size > 1) {
                         Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = ClearCutAccents.Red.copy(alpha = 0.14f),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, ClearCutAccents.Red.copy(alpha = 0.2f))
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            color = Color.Transparent,
+                            shape = RoundedCornerShape(Radius.xl),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, ClearCutAccents.Peach.copy(alpha = 0.2f))
                         ) {
                             Row(
                                 modifier = Modifier
-                                    .clickable(onClick = viewModel::deleteMultiSelectedClips)
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            listOf(
+                                                ClearCutAccents.Peach.copy(alpha = 0.18f),
+                                                semanticColors.panelHighest.copy(alpha = 0.96f),
+                                                semanticColors.panel.copy(alpha = 0.98f)
+                                            )
+                                        )
+                                    )
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    contentDescription = stringResource(R.string.editor_delete_selected),
-                                    tint = ClearCutAccents.Red,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(Modifier.width(6.dp))
-                                Text(
-                                    text = stringResource(R.string.editor_delete),
-                                    color = ClearCutAccents.Red,
-                                    style = MaterialTheme.typography.labelLarge
-                                )
-                            }
-                        }
-                        if (state.copiedEffects.isNotEmpty()) {
-                            Spacer(Modifier.width(6.dp))
-                            Surface(
-                                shape = RoundedCornerShape(10.dp),
-                                color = ClearCutAccents.Mauve.copy(alpha = 0.14f),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, ClearCutAccents.Mauve.copy(alpha = 0.2f))
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .clickable(onClick = viewModel::copyEffectsToSelectedClips)
-                                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
                                 ) {
-                                    Icon(
-                                        Icons.Default.ContentPaste,
-                                        contentDescription = stringResource(R.string.tool_paste_effects),
-                                        tint = ClearCutAccents.Mauve,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(Modifier.width(6.dp))
                                     Text(
-                                        text = stringResource(R.string.editor_paste_fx),
-                                        color = ClearCutAccents.Mauve,
-                                        style = MaterialTheme.typography.labelLarge
+                                        text = stringResource(R.string.editor_selection),
+                                        color = ClearCutAccents.Peach,
+                                        style = MaterialTheme.typography.labelSmall
                                     )
+                                    Text(
+                                        text = stringResource(R.string.editor_selected_count, state.selectedClipIds.size),
+                                        color = semanticColors.text,
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                }
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = ClearCutAccents.Red.copy(alpha = 0.14f),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, ClearCutAccents.Red.copy(alpha = 0.2f))
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .clickable(onClick = viewModel::deleteMultiSelectedClips)
+                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = stringResource(R.string.editor_delete_selected),
+                                            tint = ClearCutAccents.Red,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(Modifier.width(6.dp))
+                                        Text(
+                                            text = stringResource(R.string.editor_delete),
+                                            color = ClearCutAccents.Red,
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    }
+                                }
+                                if (state.copiedEffects.isNotEmpty()) {
+                                    Spacer(Modifier.width(6.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = ClearCutAccents.Mauve.copy(alpha = 0.14f),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, ClearCutAccents.Mauve.copy(alpha = 0.2f))
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .clickable(onClick = viewModel::copyEffectsToSelectedClips)
+                                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                Icons.Default.ContentPaste,
+                                                contentDescription = stringResource(R.string.tool_paste_effects),
+                                                tint = ClearCutAccents.Mauve,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(Modifier.width(6.dp))
+                                            Text(
+                                                text = stringResource(R.string.editor_paste_fx),
+                                                color = ClearCutAccents.Mauve,
+                                                style = MaterialTheme.typography.labelLarge
+                                            )
+                                        }
+                                    }
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = semanticColors.surfaceLow.copy(alpha = 0.7f),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, semanticColors.cardStroke)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .clickable(onClick = viewModel::clearMultiSelect)
+                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.editor_cancel),
+                                            color = semanticColors.subtext,
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    }
                                 }
                             }
                         }
-                        Spacer(Modifier.width(8.dp))
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = semanticColors.surfaceLow.copy(alpha = 0.7f),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, semanticColors.cardStroke)
+                    }
+
+                        if (state.compoundNavDepth > 0) {
+                            CompoundNavBreadcrumb(
+                                breadcrumbText = state.compoundBreadcrumbText,
+                                onExit = viewModel::exitCompoundLevel,
+                            )
+                        }
+
+                        val shouldShowTimeline = !state.isTimelineCollapsed ||
+                            isClipMode ||
+                            isTrimInteractionActive ||
+                            state.currentTool == EditorTool.MUTE_RANGE
+
+                        Column(
+                            modifier = if (sideBySideWorkspace) Modifier.fillMaxWidth().weight(1f) else Modifier.fillMaxWidth()
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .clickable(onClick = viewModel::clearMultiSelect)
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.editor_cancel),
-                                    color = semanticColors.subtext,
-                                    style = MaterialTheme.typography.labelLarge
-                                )
-                            }
+                        // Timeline — wraps its track stack between min/max bounds so
+                        // the tool rail below stays snug against the timeline content.
+                        if (shouldShowTimeline) {
+                            Timeline(
+                                tracks = orderedTimelineTracks(state.tracks),
+                                textOverlays = state.textOverlays,
+                                playheadMs = playheadMs,
+                                totalDurationMs = state.totalDurationMs,
+                                playheadMsProvider = playheadMsProvider,
+                                zoomLevel = state.zoomLevel,
+                                scrollOffsetMs = state.scrollOffsetMs,
+                                selectedClipId = state.selectedClipId,
+                                isTrimMode = state.currentTool == EditorTool.TRIM,
+                                selectedTimelineRange = state.selectedTimelineRange,
+                                isRangeSelectionMode = state.currentTool == EditorTool.MUTE_RANGE,
+                                onBeginRangeSelection = viewModel::beginTimelineRangeSelection,
+                                onRangeSelectionStarted = viewModel::clearTimelineRangeSelection,
+                                onRangeSelectionChanged = viewModel::updateTimelineRange,
+                                onCancelRangeSelection = { viewModel.setTool(EditorTool.NONE) },
+                                onMuteTimelineRange = viewModel::muteSelectedTimelineRange,
+                                waveforms = if (viewModel.showWaveforms) state.waveforms else emptyMap(),
+                                onClipSelected = viewModel::selectClip,
+                                onTextOverlaySelected = viewModel::editTextOverlay,
+                                onAddTextOverlay = viewModel::showTextEditor,
+                                onPlayheadMoved = viewModel::seekTo,
+                                onZoomChanged = viewModel::setZoomLevel,
+                                onScrollChanged = viewModel::setScrollOffset,
+                                onViewportChanged = viewModel::setTimelineViewport,
+                                compactLayout = sideBySideWorkspace,
+                                onTrimChanged = viewModel::trimClip,
+                                onTrimDragStarted = {
+                                    isTimelineEditGestureActive = true
+                                    viewModel.beginTrim()
+                                },
+                                onTrimDragEnded = {
+                                    viewModel.endTrim()
+                                    isTimelineEditGestureActive = false
+                                },
+                                onTrimDragCanceled = {
+                                    viewModel.cancelTrim()
+                                    isTimelineEditGestureActive = false
+                                },
+                                onTimelineWidthChanged = viewModel::setTimelineWidth,
+                                onToggleTrackMute = viewModel::toggleTrackMute,
+                                onToggleTrackVisible = viewModel::toggleTrackVisibility,
+                                onToggleTrackLock = viewModel::toggleTrackLock,
+                                beatMarkers = state.beatMarkers,
+                                selectedClipIds = state.selectedClipIds,
+                                snapToBeat = viewModel.snapToBeat,
+                                snapToMarker = viewModel.snapToMarker,
+                                markers = state.timelineMarkers,
+                                onAddMarker = { viewModel.addTimelineMarker() },
+                                onMarkerTapped = { marker -> viewModel.seekTo(marker.timeMs) },
+                                onClipLongPress = viewModel::toggleClipMultiSelect,
+                                onOpenCompoundClip = viewModel::openCompoundClip,
+                                onSlideClip = viewModel::slideClip,
+                                onSlipClip = viewModel::slipClip,
+                                onSlideEditStarted = {
+                                    isTimelineEditGestureActive = true
+                                    viewModel.beginSlideEdit()
+                                },
+                                onSlideEditEnded = {
+                                    viewModel.endSlideEdit()
+                                    isTimelineEditGestureActive = false
+                                },
+                                onSlideEditCanceled = {
+                                    viewModel.cancelSlideEdit()
+                                    isTimelineEditGestureActive = false
+                                },
+                                onSlipEditStarted = {
+                                    isTimelineEditGestureActive = true
+                                    viewModel.beginSlipEdit()
+                                },
+                                onSlipEditEnded = {
+                                    viewModel.endSlipEdit()
+                                    isTimelineEditGestureActive = false
+                                },
+                                onSlipEditCanceled = {
+                                    viewModel.cancelSlipEdit()
+                                    isTimelineEditGestureActive = false
+                                },
+                                onToggleTrackCollapsed = viewModel::toggleTrackCollapsed,
+                                onToggleTrackWaveform = viewModel::toggleTrackWaveform,
+                                onCollapseAllTracks = viewModel::collapseAllTracks,
+                                onExpandAllTracks = viewModel::expandAllTracks,
+                                onSetTrackHeight = viewModel::setTrackHeight,
+                                frameDurationMs = state.project.timelineTimebase.timeMsAt(1L).coerceAtLeast(1L),
+                                onSetTrackTimelineOffset = viewModel::setTrackTimelineOffset,
+                                onSetClipAudioSyncOffset = viewModel::setClipAudioSyncOffset,
+                                onScrubStart = viewModel::beginScrub,
+                                onScrubEnd = viewModel::endScrub,
+                                onSplitAtPlayhead = viewModel::splitClipAtPlayhead,
+                                onDeleteSelectedClip = viewModel::deleteSelectedClip,
+                                missingClipIds = remember(state.media.relinkReports) {
+                                    state.media.relinkReports
+                                        .filter { it.value.isMissing }
+                                        .keys
+                                },
+                                engine = viewModel.engine,
+                                modifier = timelineModifier
+                            )
+                        }
+
+                        BottomToolArea(
+                            selectedClipId = state.selectedClipId,
+                            hasCopiedEffects = state.copiedEffects.isNotEmpty(),
+                            textOverlays = state.textOverlays,
+                            onEditTextOverlay = { id -> viewModel.editTextOverlay(id) },
+                            editorMode = state.editorMode,
+                            compactLocked = sideBySideWorkspace || previewFirstLayout.lockBottomToolArea,
+                            onExpandedChange = { expanded ->
+                                isToolPanelExpanded = expanded
+                            },
+                            onDeleteTextOverlay = { id ->
+                                viewModel.removeTextOverlay(id)
+                            },
+                            onAction = editorOnAction
+                        )
                         }
                     }
-                }
-            }
-
-                if (state.compoundNavDepth > 0) {
-                    CompoundNavBreadcrumb(
-                        breadcrumbText = state.compoundBreadcrumbText,
-                        onExit = viewModel::exitCompoundLevel,
-                    )
-                }
-
-                val shouldShowTimeline = !state.isTimelineCollapsed ||
-                    isClipMode ||
-                    isTrimInteractionActive ||
-                    state.currentTool == EditorTool.MUTE_RANGE
-
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                // Timeline — wraps its track stack between min/max bounds so
-                // the tool rail below stays snug against the timeline content.
-                if (shouldShowTimeline) {
-                    Timeline(
-                        tracks = orderedTimelineTracks(state.tracks),
-                        textOverlays = state.textOverlays,
-                        playheadMs = playheadMs,
-                        totalDurationMs = state.totalDurationMs,
-                        playheadMsProvider = playheadMsProvider,
-                        zoomLevel = state.zoomLevel,
-                        scrollOffsetMs = state.scrollOffsetMs,
-                        selectedClipId = state.selectedClipId,
-                        isTrimMode = state.currentTool == EditorTool.TRIM,
-                        selectedTimelineRange = state.selectedTimelineRange,
-                        isRangeSelectionMode = state.currentTool == EditorTool.MUTE_RANGE,
-                        onBeginRangeSelection = viewModel::beginTimelineRangeSelection,
-                        onRangeSelectionStarted = viewModel::clearTimelineRangeSelection,
-                        onRangeSelectionChanged = viewModel::updateTimelineRange,
-                        onCancelRangeSelection = { viewModel.setTool(EditorTool.NONE) },
-                        onMuteTimelineRange = viewModel::muteSelectedTimelineRange,
-                        waveforms = if (viewModel.showWaveforms) state.waveforms else emptyMap(),
-                        onClipSelected = viewModel::selectClip,
-                        onTextOverlaySelected = viewModel::editTextOverlay,
-                        onAddTextOverlay = viewModel::showTextEditor,
-                        onPlayheadMoved = viewModel::seekTo,
-                        onZoomChanged = viewModel::setZoomLevel,
-                        onScrollChanged = viewModel::setScrollOffset,
-                        onTrimChanged = viewModel::trimClip,
-                        onTrimDragStarted = {
-                            isTimelineEditGestureActive = true
-                            viewModel.beginTrim()
-                        },
-                        onTrimDragEnded = {
-                            viewModel.endTrim()
-                            isTimelineEditGestureActive = false
-                        },
-                        onTrimDragCanceled = {
-                            viewModel.cancelTrim()
-                            isTimelineEditGestureActive = false
-                        },
-                        onTimelineWidthChanged = viewModel::setTimelineWidth,
-                        onToggleTrackMute = viewModel::toggleTrackMute,
-                        onToggleTrackVisible = viewModel::toggleTrackVisibility,
-                        onToggleTrackLock = viewModel::toggleTrackLock,
-                        beatMarkers = state.beatMarkers,
-                        selectedClipIds = state.selectedClipIds,
-                        snapToBeat = viewModel.snapToBeat,
-                        snapToMarker = viewModel.snapToMarker,
-                        markers = state.timelineMarkers,
-                        onAddMarker = { viewModel.addTimelineMarker() },
-                        onMarkerTapped = { marker -> viewModel.seekTo(marker.timeMs) },
-                        onClipLongPress = viewModel::toggleClipMultiSelect,
-                        onOpenCompoundClip = viewModel::openCompoundClip,
-                        onSlideClip = viewModel::slideClip,
-                        onSlipClip = viewModel::slipClip,
-                        onSlideEditStarted = {
-                            isTimelineEditGestureActive = true
-                            viewModel.beginSlideEdit()
-                        },
-                        onSlideEditEnded = {
-                            viewModel.endSlideEdit()
-                            isTimelineEditGestureActive = false
-                        },
-                        onSlideEditCanceled = {
-                            viewModel.cancelSlideEdit()
-                            isTimelineEditGestureActive = false
-                        },
-                        onSlipEditStarted = {
-                            isTimelineEditGestureActive = true
-                            viewModel.beginSlipEdit()
-                        },
-                        onSlipEditEnded = {
-                            viewModel.endSlipEdit()
-                            isTimelineEditGestureActive = false
-                        },
-                        onSlipEditCanceled = {
-                            viewModel.cancelSlipEdit()
-                            isTimelineEditGestureActive = false
-                        },
-                        onToggleTrackCollapsed = viewModel::toggleTrackCollapsed,
-                        onToggleTrackWaveform = viewModel::toggleTrackWaveform,
-                        onCollapseAllTracks = viewModel::collapseAllTracks,
-                        onExpandAllTracks = viewModel::expandAllTracks,
-                        onSetTrackHeight = viewModel::setTrackHeight,
-                        frameDurationMs = state.project.timelineTimebase.timeMsAt(1L).coerceAtLeast(1L),
-                        onSetTrackTimelineOffset = viewModel::setTrackTimelineOffset,
-                        onSetClipAudioSyncOffset = viewModel::setClipAudioSyncOffset,
-                        onScrubStart = viewModel::beginScrub,
-                        onScrubEnd = viewModel::endScrub,
-                        onSplitAtPlayhead = viewModel::splitClipAtPlayhead,
-                        onDeleteSelectedClip = viewModel::deleteSelectedClip,
-                        missingClipIds = remember(state.media.relinkReports) {
-                            state.media.relinkReports
-                                .filter { it.value.isMissing }
-                                .keys
-                        },
-                        engine = viewModel.engine,
-                        modifier = Modifier.editorTimelineModifier(
-                            timelineMinHeight = timelineMinHeight,
-                            timelineMaxHeight = timelineMaxHeight,
-                        )
-                    )
-                }
-
-                BottomToolArea(
-                    selectedClipId = state.selectedClipId,
-                    hasCopiedEffects = state.copiedEffects.isNotEmpty(),
-                    textOverlays = state.textOverlays,
-                    onEditTextOverlay = { id -> viewModel.editTextOverlay(id) },
-                    editorMode = state.editorMode,
-                    compactLocked = previewFirstLayout.lockBottomToolArea,
-                    onExpandedChange = { expanded ->
-                        isToolPanelExpanded = expanded
-                    },
-                    onDeleteTextOverlay = { id ->
-                        viewModel.removeTextOverlay(id)
-                    },
-                    onAction = editorOnAction
-                )
-                }
-            }
+                },
+            )
         }
 
         // Bottom sheets / overlays

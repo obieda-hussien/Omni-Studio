@@ -3381,4 +3381,41 @@
     <string name="export_setup_tab">Formato</string>
     <string name="export_options_tab">Opciones</string>
     <string name="export_review_tab">Revisión</string>
+    <!-- Navegador de herramientas de IA y gestión de modelos. -->
+    <string name="ai_tools_browser_subtitle">Encuentra ayuda para tu próxima edición.</string>
+    <string name="ai_tools_tab_tools">Herramientas</string>
+    <string name="ai_tools_tab_models">Modelos y ajustes</string>
+    <string name="ai_tools_search">Buscar herramientas</string>
+    <string name="ai_tools_clear_search">Borrar búsqueda</string>
+    <string name="ai_tools_category_all">Todas</string>
+    <string name="ai_tools_category_edit">Edición</string>
+    <string name="ai_tools_category_audio">Audio y subtítulos</string>
+    <string name="ai_tools_category_background">Fondo</string>
+    <string name="ai_tools_category_motion">Movimiento y encuadre</string>
+    <string name="ai_tools_category_enhance">Color y detalle</string>
+    <string name="ai_tools_selection_help">Selecciona un clip en la línea de tiempo para usar las herramientas de clips. El Asistente de corte analiza toda la línea de tiempo.</string>
+    <string name="ai_tools_select_clip">Seleccionar un clip</string>
+    <string name="ai_tools_select_clip_for_tool">Selecciona un clip para usar %1$s.</string>
+    <string name="ai_tools_use_tool">Usar herramienta</string>
+    <string name="ai_tools_details_expanded">Detalles desplegados</string>
+    <string name="ai_tools_details_collapsed">Mostrar detalles</string>
+    <string name="ai_tools_no_results">No hay herramientas que coincidan</string>
+    <string name="ai_tools_search_hint">Prueba otro nombre o elige una categoría diferente.</string>
+    <string name="ai_tools_reset_filters">Mostrar todas las herramientas</string>
+    <string name="ai_tools_manage_models">Gestionar modelos</string>
+    <string name="ai_tools_busy_hint">Espera a que termine la tarea actual o cancélala arriba.</string>
+    <string name="ai_tools_model_speech">Reconocimiento de voz</string>
+    <string name="ai_tools_model_background">Separación del fondo</string>
+    <string name="ai_tools_model_objects">Eliminación de objetos</string>
+    <string name="ai_tools_models_description">Las descargas opcionales mejoran las herramientas compatibles. Algunas herramientas avanzadas necesitan componentes que no se incluyen en esta versión.</string>
+    <string name="ai_tools_download">Descargar</string>
+    <string name="ai_tools_speech_error">Vuelve a intentar la descarga para mejorar el reconocimiento de voz.</string>
+    <string name="ai_tools_speech_downloading">Descargando reconocimiento de voz para usarlo en este dispositivo.</string>
+    <string name="ai_tools_background_ready">La separación del fondo está disponible en este dispositivo.</string>
+    <string name="ai_tools_background_error">Vuelve a intentar la descarga para mejorar la separación del fondo.</string>
+    <string name="ai_tools_background_downloading">Descargando la separación del fondo para usarla en este dispositivo.</string>
+    <plurals name="ai_tools_result_count">
+        <item quantity="one">%1$d herramienta</item>
+        <item quantity="other">%1$d herramientas</item>
+    </plurals>
 </resources>

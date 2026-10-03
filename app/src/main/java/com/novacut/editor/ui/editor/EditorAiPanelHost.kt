@@ -6,6 +6,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
+import com.novacut.editor.R
 import com.novacut.editor.engine.InpaintingModelState
 import com.novacut.editor.engine.segmentation.SegmentationModelState
 import com.novacut.editor.engine.whisper.WhisperModelState
@@ -22,6 +24,7 @@ fun BoxScope.EditorAiPanelHost(
     inpaintingDownloadProgress: Float,
     networkAvailable: Boolean,
 ) {
+    val resources = LocalResources.current
     val stabilizationProfileImportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
     ) { uri ->
@@ -40,7 +43,10 @@ fun BoxScope.EditorAiPanelHost(
                     viewModel.runAiTool(toolId)
                 }
             },
-            onDisabledToolTapped = { toolName -> viewModel.showToast("Select a clip to use $toolName") },
+            onDisabledToolTapped = { toolName ->
+                viewModel.hideAiToolsPanel()
+                viewModel.showToast(resources.getString(R.string.ai_tools_select_clip_for_tool, toolName))
+            },
             onCancelProcessing = viewModel::cancelAiTool,
             onClose = viewModel::hideAiToolsPanel,
             processingTool = state.aiProcessingTool,

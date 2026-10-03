@@ -181,7 +181,7 @@ class EditorPlaybackCoordinator internal constructor(
         frameSyncJob?.cancel()
         frameSyncJob = null
         cancelRecoveryJobs()
-        port.setScrubbingMode(false)
+        setScrubbingMode(false)
         port.removePlayerListener()
         callbacks = null
         playbackScope = null
@@ -209,8 +209,16 @@ class EditorPlaybackCoordinator internal constructor(
         if (port.isPlaybackRequested()) armPlaybackStartRecovery(positionMs)
     }
 
+    private var timelineGestureActive = false
+
     fun setScrubbingMode(enabled: Boolean) {
+        setTimelineFollowSuspended(enabled)
         port.setScrubbingMode(enabled)
+    }
+
+    /** Trim needs live decoding while keeping the viewport under manual control. */
+    fun setTimelineFollowSuspended(suspended: Boolean) {
+        timelineGestureActive = suspended
     }
 
     fun setLooping(enabled: Boolean) {
@@ -305,7 +313,7 @@ class EditorPlaybackCoordinator internal constructor(
 
     private fun requestPlayback(positionMs: Long, restartSession: Boolean): Boolean {
         return try {
-            port.setScrubbingMode(false)
+            setScrubbingMode(false)
             port.playFromTimelinePosition(positionMs, restartSession)
             true
         } catch (error: Exception) {
@@ -330,6 +338,7 @@ class EditorPlaybackCoordinator internal constructor(
     }
 
     private fun calculateScrollOffset(snapshot: PlaybackSnapshot, currentMs: Long): Long {
+        if (timelineGestureActive) return snapshot.scrollOffsetMs
         val pixelsPerMs = snapshot.zoomLevel * TIMELINE_BASE_SCALE
         var newScroll = snapshot.scrollOffsetMs
         if (snapshot.timelineWidthPx > 0f && pixelsPerMs >= 0.001f) {
@@ -344,7 +353,7 @@ class EditorPlaybackCoordinator internal constructor(
     }
 
     private companion object {
-        const val TIMELINE_BASE_SCALE = 0.15f
+        const val TIMELINE_BASE_SCALE = TIMELINE_PIXELS_PER_MS
         const val PLAYBACK_FRAME_INTERVAL_MS = 33L
         const val PLAYBACK_START_RECOVERY_DELAY_MS = 3_000L
         const val PLAYBACK_START_FAILURE_DELAY_MS = 7_000L

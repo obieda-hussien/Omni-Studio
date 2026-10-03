@@ -66,12 +66,14 @@ internal fun resolveTimelineClipGestureZone(
     trimHandleWidthPx: Float,
     isTrimMode: Boolean
 ): TimelineClipGestureZone {
-    if (clipWidthPx <= 0f || trimHandleWidthPx <= 0f || !touchXPx.isFinite()) {
+    if (!clipWidthPx.isFinite() || !trimHandleWidthPx.isFinite() ||
+        clipWidthPx <= 0f || trimHandleWidthPx <= 0f || !touchXPx.isFinite()) {
         return TimelineClipGestureZone.NONE
     }
+    val handleWidth = trimHandleWidthPx.coerceAtMost(clipWidthPx / 3f)
     return when {
-        touchXPx < trimHandleWidthPx -> TimelineClipGestureZone.TRIM_LEFT
-        touchXPx > clipWidthPx - trimHandleWidthPx -> TimelineClipGestureZone.TRIM_RIGHT
+        touchXPx < handleWidth -> TimelineClipGestureZone.TRIM_LEFT
+        touchXPx > clipWidthPx - handleWidth -> TimelineClipGestureZone.TRIM_RIGHT
         isTrimMode -> TimelineClipGestureZone.SLIP
         else -> TimelineClipGestureZone.SLIDE
     }
@@ -84,7 +86,7 @@ internal fun resolveTimelineClipGestureAction(
     pixelsPerMs: Float,
     minimumClipDurationMs: Long = MIN_TIMELINE_CLIP_DURATION_MS
 ): TimelineClipGestureAction? {
-    if (zone == TimelineClipGestureZone.NONE || pixelsPerMs < 0.001f || !deltaXPx.isFinite()) {
+    if (zone == TimelineClipGestureZone.NONE || !pixelsPerMs.isFinite() || pixelsPerMs < 0.001f || !deltaXPx.isFinite()) {
         return null
     }
     val deltaMs = (deltaXPx / pixelsPerMs).toLong()

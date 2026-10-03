@@ -32,6 +32,7 @@ The long-term goal is **Omni Studio — Agent-Native Creative Suite**: video fir
 
 - Android API 26+; compile/target API 37.
 - Kotlin 2.4.10 + Jetpack Compose + Material 3.
+- Gradle 9.8.0 with a checksum-pinned wrapper; Android CI uses Ubuntu 24.04 and JDK 17.
 - Media3 playback, transformation, effects and muxing.
 - Source-pinned FFmpegKitNext fallback/native processing.
 - Room 3 persistence, Hilt/KSP, WorkManager and baseline profiles.
@@ -67,7 +68,16 @@ Large media is not serialized into Binder JSON. Future media exchange uses bound
 ## Workspace organization
 
 The editor uses a stable tool rail with adaptive action workbenches, a quieter preview,
-and focused settings destinations. See [workspace behavior and verification](docs/ARCHITECTURE.md#workspace-organization).
+and focused settings destinations. The timeline keeps a consistent left-to-right time axis on RTL devices,
+with coordinated pan/zoom and a preview/editing split on short landscape phone windows.
+See [workspace behavior](docs/ARCHITECTURE.md#workspace-organization) and
+[timeline interaction fixes and verification](docs/timeline-interaction-regressions.md).
+
+AI Tools opens directly to a searchable tool list with task categories and expandable details.
+Only one tool's details open at a time, and processing starts from an explicit **Use tool** action.
+**Select a clip** returns to the timeline when media is needed. **Models & setup** keeps downloads,
+removal confirmations, and stabilization profiles in a separate tab. Processing progress and cancellation
+stay visible across both tabs; the browser retains search, category, and scroll position while switching.
 
 ## Existing editor baseline
 
@@ -270,3 +280,14 @@ See `LICENSE`, the in-app third-party notices and `third_party/` for authoritati
 ---
 
 **Omni Studio — create manually, automate semantically.**
+
+## CI downloads
+
+Android CI uploads each release APK as a separate downloadable ZIP:
+`arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`, and `universal`. Choose the APK for
+one device architecture; the universal APK contains all architectures and is
+larger. The release AAB and signing notice are separate artifacts, so an APK
+download does not include either. CI reports remain in their own artifact.
+
+These release builds remain unsigned and require the approved production key
+before installation or distribution.

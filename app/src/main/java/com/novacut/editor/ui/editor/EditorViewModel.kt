@@ -129,7 +129,7 @@ import javax.inject.Inject
 import kotlin.math.roundToLong
 import com.novacut.editor.engine.redacted
 
-private const val TIMELINE_BASE_SCALE = 0.15f
+private const val TIMELINE_BASE_SCALE = TIMELINE_PIXELS_PER_MS
 // Min zoom lowered from 0.1 → 0.01 so a ~10-minute video fits the phone viewport
 // when the user taps "fit to window" or when the timeline auto-fits on first layout.
 // Previously fit-zoom was clamped before it could reach a ratio that actually fit,
@@ -981,14 +981,10 @@ class EditorViewModel @Inject constructor(
     }
 
     private fun maxTimelineScrollOffset(state: EditorState = _state.value): Long {
-        val totalDurationMs = state.totalDurationMs.coerceAtLeast(0L)
-        if (totalDurationMs == 0L) return 0L
-
-        val visibleDurationMs = visibleTimelineDurationMs(state) ?: return totalDurationMs
-        val leadOutPaddingMs = (visibleDurationMs / 4L).coerceIn(750L, 6_000L)
-        val minVisibleContentMs = (visibleDurationMs - leadOutPaddingMs)
-            .coerceAtLeast((visibleDurationMs / 2L).coerceAtLeast(1L))
-        return (totalDurationMs - minVisibleContentMs).coerceAtLeast(0L)
+        return maxTimelineViewportScrollMs(
+            totalDurationMs = state.totalDurationMs,
+            visibleDurationMs = visibleTimelineDurationMs(state),
+        )
     }
 
     private fun clampTimelineScrollOffset(offsetMs: Long, state: EditorState = _state.value): Long {
@@ -1742,17 +1738,28 @@ class EditorViewModel @Inject constructor(
     fun duplicateSelectedClip() = clipEditingDelegate.duplicateSelectedClip()
     fun mergeWithNextClip() = clipEditingDelegate.mergeWithNextClip()
     fun splitClipAtPlayhead() = clipEditingDelegate.splitClipAtPlayhead()
-    fun beginTrim() = clipEditingDelegate.beginTrim()
+    fun beginTrim() {
+        clipEditingDelegate.beginTrim()
+        playbackCoordinator.setTimelineFollowSuspended(true)
+    }
     fun trimClip(clipId: String, newTrimStartMs: Long? = null, newTrimEndMs: Long? = null) = clipEditingDelegate.trimClip(clipId, newTrimStartMs, newTrimEndMs)
     fun endTrim() {
         extendedTrimPreviewJob?.cancel()
         extendedTrimPreviewJob = null
-        clipEditingDelegate.endTrim()
+        try {
+            clipEditingDelegate.endTrim()
+        } finally {
+            playbackCoordinator.setTimelineFollowSuspended(false)
+        }
     }
     fun cancelTrim() {
         extendedTrimPreviewJob?.cancel()
         extendedTrimPreviewJob = null
-        clipEditingDelegate.endTrim(commit = false)
+        try {
+            clipEditingDelegate.endTrim(commit = false)
+        } finally {
+            playbackCoordinator.setTimelineFollowSuspended(false)
+        }
     }
     fun beginSpeedChange() = clipEditingDelegate.beginSpeedChange()
     fun setClipSpeed(clipId: String, speed: Float) = clipEditingDelegate.setClipSpeed(clipId, speed)
@@ -2026,6 +2033,15 @@ class EditorViewModel @Inject constructor(
             updatedState.copy(
                 scrollOffsetMs = clampTimelineScrollOffset(updatedState.scrollOffsetMs, updatedState)
             )
+        }
+        preloadVisibleWaveforms(_state.value)
+    }
+
+    /** Pinch zoom and pan form one viewport update, so neither can clamp the other mid-frame. */
+    fun setTimelineViewport(zoom: Float, offsetMs: Long) {
+        _state.update { state ->
+            val zoomed = state.copy(zoomLevel = TimelineToolbarPolicy.clampZoom(zoom))
+            zoomed.copy(scrollOffsetMs = clampTimelineScrollOffset(offsetMs, zoomed))
         }
         preloadVisibleWaveforms(_state.value)
     }
@@ -4652,7 +4668,6 @@ class EditorViewModel @Inject constructor(
     }
 
     fun slipClip(clipId: String, slipAmountMs: Long) {
-        if (quantizeProjectDurationMs(slipAmountMs) == 0L) return
         val baseTracks = slipEditStartTracks ?: _state.value.tracks
         val linkedIds = linkedClipIds(baseTracks, clipId)
         if (baseTracks.any { track ->
@@ -4667,7 +4682,7 @@ class EditorViewModel @Inject constructor(
             slipAmountMs,
             _state.value.project.timelineTimebase,
         )
-        if (hasSameClipTiming(candidateTracks, baseTracks)) return
+        if (hasSameClipTiming(candidateTracks, _state.value.tracks)) return
         markTimelineGestureMutation("Slip edit")
         _state.update { it.copy(tracks = candidateTracks) }
         // Intentionally NOT calling rebuildPlayerTimeline() here. Slip-drag fires
@@ -4678,10 +4693,9 @@ class EditorViewModel @Inject constructor(
     }
 
     fun slideClip(clipId: String, slideAmountMs: Long) {
-        if (quantizeProjectDurationMs(slideAmountMs) == 0L) return
         val tracks = slideEditStartTracks ?: _state.value.tracks
         val candidateTracks = planSlideTracks(tracks, clipId, slideAmountMs)
-        if (hasSameClipTiming(candidateTracks, tracks)) return
+        if (hasSameClipTiming(candidateTracks, _state.value.tracks)) return
         markTimelineGestureMutation("Slide edit")
         _state.update { it.copy(tracks = candidateTracks) }
         // Deferred to endSlideEdit() to avoid per-frame player rebuilds during drag.

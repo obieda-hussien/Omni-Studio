@@ -17,7 +17,9 @@ concurrency:
 jobs:
   verify:
     name: Verify release build
-    runs-on: ubuntu-latest
+    # Keep the release lane on the validated LTS image. ubuntu-latest moves
+    # to 26.04 starting 2026-10-19; adopt it through a separate tested upgrade.
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g"
@@ -88,12 +90,53 @@ jobs:
             app/build/reports/**
             app/build/test-results/**
 
-      - name: Upload release artifacts
+      # Each upload creates its own downloadable ZIP. Keep ABI APKs and the
+      # Play bundle separate so installing one build never requires all of them.
+      - name: Upload ARM64 release APK
         uses: actions/upload-artifact@v6
         with:
-          name: omni-studio-release-unsigned
+          name: omni-studio-apk-arm64-v8a-release-unsigned
           if-no-files-found: error
-          path: |
-            app/build/outputs/apk/release/*.apk
-            app/build/outputs/bundle/release/*.aab
-            app/build/outputs/ci-release/README.txt
+          path: app/build/outputs/apk/release/*-arm64-v8a-*.apk
+
+      - name: Upload ARM32 release APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: omni-studio-apk-armeabi-v7a-release-unsigned
+          if-no-files-found: error
+          path: app/build/outputs/apk/release/*-armeabi-v7a-*.apk
+
+      - name: Upload x86 release APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: omni-studio-apk-x86-release-unsigned
+          if-no-files-found: error
+          path: app/build/outputs/apk/release/*-x86-*.apk
+
+      - name: Upload x86_64 release APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: omni-studio-apk-x86_64-release-unsigned
+          if-no-files-found: error
+          path: app/build/outputs/apk/release/*-x86_64-*.apk
+
+      - name: Upload universal release APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: omni-studio-apk-universal-release-unsigned
+          if-no-files-found: error
+          path: app/build/outputs/apk/release/*-universal-*.apk
+
+      - name: Upload release AAB
+        uses: actions/upload-artifact@v6
+        with:
+          name: omni-studio-aab-release-unsigned
+          if-no-files-found: error
+          path: app/build/outputs/bundle/release/*.aab
+
+      - name: Upload release signing notice
+        uses: actions/upload-artifact@v6
+        with:
+          name: omni-studio-release-signing-notice
+          if-no-files-found: error
+          path: app/build/outputs/ci-release/README.txt
