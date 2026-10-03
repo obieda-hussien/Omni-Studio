@@ -4,6 +4,23 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class NeuralMediaPolicyTest {
+    @Test fun microsecondTimestampsSnapIntegerCadenceAtRifeLimit() {
+        for (fps in listOf(24.0, 25.0, 30.0, 50.0, 60.0, 120.0)) {
+            val timestamps = (0 until 96).map { (it * 1_000_000.0 / fps).toLong() }
+            val actual = NeuralMediaPolicy.sourceFrameRate(timestamps, fps)
+            assertEquals(fps, actual, 1e-9)
+            val multiplier = if (fps <= 60) 2 else 1
+            assertEquals((fps * multiplier).toInt(), NeuralMediaPolicy.frameCount(1000, actual * multiplier))
+        }
+    }
+    @Test fun normalizationKeepsNtscAndGenuinelyHigherCadenceDistinct() {
+        for (fps in listOf(24000.0 / 1001, 60000.0 / 1001)) {
+            val timestamps = (0 until 96).map { (it * 1_000_000.0 / fps).toLong() }
+            assertEquals(fps, NeuralMediaPolicy.sourceFrameRate(timestamps, fps), 1e-9)
+        }
+        val tooFast = (0 until 96).map { (it * 1_000_000.0 / 60.01).toLong() }
+        assertTrue(NeuralMediaPolicy.sourceFrameRate(tooFast, 60.0) > 60.005)
+    }
     @Test fun memoryChecksBothHeapAndNativeHeadroomBeforeAllocation() {
         NeuralMediaPolicy.requireMemory(100, 200, 100, 300)
         assertReason(NeuralMediaException.Reason.MEMORY) { NeuralMediaPolicy.requireMemory(100, 200, 99, 300) }

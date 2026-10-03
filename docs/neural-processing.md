@@ -6,6 +6,8 @@
 
 **AI Upscale** uses the compact Real-ESRGAN general x4v3 model. The model predicts 4x detail in overlapping tiles; each disjoint tile core is downsampled to the advertised 2x output. Tiles have 40 pixels of context. The app never allocates a full 4x result. Images retain their timeline duration; videos retain cadence and audio.
 
+Transparent still images retain their original alpha, resampled separately with bilinear filtering over the complete 2x output. Neural inference enhances RGB only; it cannot replace transparency with inferred background color.
+
 Both models have immutable source revisions and exact SHA-256 pins in [models.md](models.md). Inference verifies the complete file before creating its session. Downloads respect the existing Wi-Fi-only preference, network validation, transfer ceiling and atomic file activation. Download, inference and deletion share a per-model mutex. Model licenses are included in the in-app open-source notices.
 
 ## Resource limits and failure behavior
@@ -17,7 +19,7 @@ Both models have immutable source revisions and exact SHA-256 pins in [models.md
 - The neural tools reject known HDR at the editor gate and also inspect encoded color transfer in the video engine. SDR output does not inherit obsolete source color metadata.
 - Decode keeps only two source frames and one rendered frame resident. RIFE uses edge-repeat padding to multiples of 32 and crops the result. Identical inputs bypass inference. Still-image decoding checks dimensions before allocating and applies EXIF orientation.
 - Output is CFR. Encoded timestamps recover fractional cadence from rounded metadata. Variable-rate inputs are resampled to the measured average cadence; this does not preserve per-frame VFR timestamps.
-- FFmpeg image-sequence encoding maps optional source audio, supports fractional fps and sets the output duration. It does not use `-shortest`, so a shorter audio stream cannot cut the video. Container duration can differ by up to a frame or codec padding; existing clip timing stays unchanged.
+- FFmpeg image-sequence encoding maps optional source audio, supports fractional fps and sets the neural output duration without `-shortest`, so a shorter audio stream cannot cut the video. Legacy callers without an explicit duration retain `-shortest` to avoid extending the container past the rendered sequence. Container duration can differ by up to a frame or codec padding; existing clip timing stays unchanged.
 - Cancellation is checked between decode/inference steps and tiles; an already executing synchronous ONNX call finishes before resources close. Temporary frames and failed output files are removed. Neural inference speed and memory use still depend on the Android device; this is offline batch processing, not a real-time preview effect.
 - Before applying output, the delegate re-checks that the clip still exists, is unchanged and is unlocked. It creates one undo entry, clears obsolete proxies and saves the project. Cancellation/failure/stale edits retain the original source.
 

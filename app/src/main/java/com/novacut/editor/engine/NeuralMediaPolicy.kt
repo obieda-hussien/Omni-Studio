@@ -25,13 +25,16 @@ object NeuralMediaPolicy {
         }
     }
 
-    /** Encoded timestamps retain 29.97/59.94 cadence when MediaFormat rounds its frame-rate hint. */
+    /** Recover standard cadence from microsecond timestamps without rounding NTSC to integers. */
     fun sourceFrameRate(timestampsUs: List<Long>, hint: Double?): Double {
         val times = timestampsUs.filter { it >= 0 }.distinct().sorted()
         val rate = if (times.size >= 8 && times.last() > times.first())
             (times.size - 1) * 1_000_000.0 / (times.last() - times.first())
         else hint?.takeIf { it.isFinite() && it > 0 } ?: 30.0
-        val standards = listOf(24000.0 / 1001, 30000.0 / 1001, 60000.0 / 1001, 120000.0 / 1001)
+        // Integer-microsecond timestamp quantization can put 60 fps just above 60.
+        // This narrow tolerance still distinguishes 59.94 from 60 and rejects 60.01.
+        val standards = listOf(24000.0 / 1001, 30000.0 / 1001, 60000.0 / 1001, 120000.0 / 1001,
+            12.0, 15.0, 24.0, 25.0, 30.0, 48.0, 50.0, 60.0, 90.0, 100.0, 120.0)
         return standards.firstOrNull { kotlin.math.abs(it - rate) < 0.005 } ?: rate
     }
 

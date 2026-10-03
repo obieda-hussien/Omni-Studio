@@ -84,6 +84,7 @@ class UpscaleEngine @Inject constructor(
                 }
                 progress((index + 1f) / tiles.size)
             }
+            OnnxRgbFrames.preserveAlpha(output, input)
             complete = true
             return output
         } finally { if (!complete) output.recycle() }

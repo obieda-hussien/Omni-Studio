@@ -3,11 +3,28 @@ package com.novacut.editor.engine
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
+import android.graphics.Rect
 import java.nio.FloatBuffer
 import kotlin.math.roundToInt
 
 /** Float32 NCHW RGB in [0,1]. RIFE padding repeats the nearest edge, then output is cropped. */
 object OnnxRgbFrames {
+    /** Resample the original alpha independently of neural RGB, across the complete output. */
+    internal fun preserveAlpha(output: Bitmap, source: Bitmap) {
+        if (!source.hasAlpha()) return
+        require(output.isMutable && output.hasAlpha())
+        val maskPaint = Paint(Paint.FILTER_BITMAP_FLAG).apply {
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
+        }
+        // DST_IN uses only source alpha. Canvas handles premultiplication and avoids
+        // a full-sized mask allocation or discontinuities at inference tile edges.
+        Canvas(output).drawBitmap(source, null, Rect(0, 0, output.width, output.height), maskPaint)
+    }
+
     fun tensor(environment: OrtEnvironment, bitmap: Bitmap, paddedWidth: Int = bitmap.width,
                paddedHeight: Int = bitmap.height): OnnxTensor {
         require(paddedWidth >= bitmap.width && paddedHeight >= bitmap.height)

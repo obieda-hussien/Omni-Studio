@@ -152,7 +152,7 @@ class FFmpegEngine @Inject constructor(
         onProgress: (Float) -> Unit = {}
     ): Boolean = encodeImageSequenceWithAudio(inputUri, framePattern, fps.toDouble(), outputFile, null, onProgress)
 
-    /** Fractional cadence and exact video duration. Short audio never truncates the rendered video. */
+    /** Explicit video duration protects against short audio; legacy callers end at the shortest stream. */
     suspend fun encodeImageSequenceWithAudio(
         inputUri: Uri,
         framePattern: String,
@@ -184,7 +184,7 @@ class FFmpegEngine @Inject constructor(
                     addAll(listOf("-c:v", encoder.ffmpegName))
                     addAll(intermediateQualityArgs(encoder))
                     addAll(listOf("-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k"))
-                    if (durationMs != null) addAll(listOf("-t", String.format(java.util.Locale.US, "%.6f", durationMs / 1000.0)))
+                    addAll(imageSequenceEndArgs(durationMs))
                     addAll(listOf("-movflags", "+faststart", outputFile.absolutePath))
                 },
                 progressDurationMs = durationMs,
@@ -916,6 +916,13 @@ class FFmpegEngine @Inject constructor(
 
     companion object {
         private const val TAG = "FFmpegEngine"
+
+        internal fun imageSequenceEndArgs(durationMs: Long?): List<String> =
+            if (durationMs == null) listOf("-shortest")
+            else {
+                require(durationMs > 0)
+                listOf("-t", String.format(Locale.US, "%.6f", durationMs / 1000.0))
+            }
 
         fun escapeFilterPath(path: String): String {
             return path
