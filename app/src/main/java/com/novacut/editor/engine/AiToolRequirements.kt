@@ -37,8 +37,11 @@ object AiToolRequirements {
         /** Real-ESRGAN upscaler. */
         AI_UPSCALE("video_upscale"),
 
-        /** RIFE frame interpolation. */
+        /** Built-in optical-flow interpolation. */
         FRAME_INTERP("frame_interp"),
+
+        /** Practical-RIFE neural interpolation. */
+        RIFE_INTERP("rife_interp"),
 
         /** LaMa inpainting (Object Remove). */
         OBJECT_REMOVE("object_remove"),
@@ -243,16 +246,29 @@ object AiToolRequirements {
         ),
         Tool.AI_UPSCALE to ToolRequirement(
             tool = Tool.AI_UPSCALE,
-            modelDisplayName = "Real-ESRGAN x4plus (ONNX)",
-            estimatedBytes = 17_000_000L,
+            modelDisplayName = "Real-ESRGAN general x4v3 (ONNX, 2x output)",
+            estimatedBytes = 4_866_396L,
             license = "BSD-3-Clause",
             sourceUrl = "https://github.com/xinntao/Real-ESRGAN",
-            modelRegistryId = null,
-            deliveryMode = DeliveryMode.DEPENDENCY_NOT_BUNDLED,
+            modelRegistryId = "realesrgan.general.x4v3.onnx",
+            deliveryMode = DeliveryMode.EXPLICIT_DOWNLOAD,
             fdroidPosture = FdroidPosture.OK,
-            runtimeChecksum = RuntimeChecksumBehavior.BLOCKED_UNTIL_PINNED,
+            runtimeChecksum = RuntimeChecksumBehavior.REQUIRED,
             runtimeLocation = Runtime.ON_DEVICE,
-            availability = Availability.DEPENDENCY_MISSING,
+            availability = Availability.MODEL_DOWNLOAD_REQUIRED,
+        ),
+        Tool.RIFE_INTERP to ToolRequirement(
+            tool = Tool.RIFE_INTERP,
+            modelDisplayName = "Practical-RIFE 4.9 (ONNX)",
+            estimatedBytes = 21_458_882L,
+            license = "MIT",
+            sourceUrl = "https://github.com/hzwer/Practical-RIFE",
+            modelRegistryId = "rife.v4.9.onnx",
+            deliveryMode = DeliveryMode.EXPLICIT_DOWNLOAD,
+            fdroidPosture = FdroidPosture.OK,
+            runtimeChecksum = RuntimeChecksumBehavior.REQUIRED,
+            runtimeLocation = Runtime.ON_DEVICE,
+            availability = Availability.MODEL_DOWNLOAD_REQUIRED,
         ),
         Tool.FRAME_INTERP to ToolRequirement(
             tool = Tool.FRAME_INTERP,

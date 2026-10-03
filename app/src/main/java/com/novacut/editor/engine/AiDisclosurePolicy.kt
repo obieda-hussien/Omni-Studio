@@ -64,6 +64,7 @@ object AiDisclosurePolicy {
         "style_transfer",
         "video_upscale",
         "frame_interp",
+        "rife_interp",
         "auto_edit",
         "voice_clone",
         "generative_video",

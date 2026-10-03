@@ -535,7 +535,7 @@
     <string name="ai_tool_denoise">Eliminar ruido de audio</string>
     <string name="ai_tool_denoise_desc">Eliminar el ruido de fondo</string>
     <string name="ai_tool_ai_upscale">IA de lujo</string>
-    <string name="ai_tool_ai_upscale_desc">Vídeo exclusivo con Real-ESRGAN</string>
+    <string name="ai_tool_ai_upscale_desc">Mejora imágenes y vídeos al doble de tamaño con Real-ESRGAN</string>
     <string name="ai_tool_frame_interp_desc">Generar fotogramas intermedios para un movimiento más fluido</string>
     <string name="ai_tool_ai_background">Antecedentes de la IA</string>
     <string name="ai_tool_ai_background_desc">Pantalla verde AI con estera RVM</string>
@@ -3435,4 +3435,24 @@
     <string name="ai_tool_unavailable">Próximamente</string>
     <string name="ai_tool_unavailable_hint">Esta herramienta no está incluida en esta versión. Elige una herramienta disponible para continuar.</string>
     <string name="ai_frame_interp_hdr_unsupported">El suavizado de movimiento admite vídeo SDR. Se ha conservado el archivo HDR original.</string>
+    <string name="ai_tool_rife">Movimiento fluido RIFE</string>
+    <string name="ai_tool_rife_desc">Genera fotogramas intermedios con el modelo neuronal RIFE</string>
+    <string name="ai_rife_hint">Duplica los fps. Vídeo SDR hasta 720p / 60 fps; conserva duración y audio. Descarga RIFE en Modelos y configuración.</string>
+    <string name="ai_rife_model_title">RIFE 4.9 · 20,5 MiB</string>
+    <string name="ai_rife_model_description">Interpolación neuronal en este dispositivo. Licencia MIT. Usa almacenamiento temporal; los vídeos más grandes pueden usar Movimiento fluido.</string>
+    <string name="ai_upscale_model_title">Real-ESRGAN · 4,6 MiB</string>
+    <string name="ai_upscale_model_description">Mejora imágenes y vídeos al doble de tamaño en este dispositivo. BSD-3-Clause. Imágenes hasta 16 MP; vídeo hasta 1080p de salida.</string>
+    <string name="ai_neural_model_ready">Modelo listo</string>
+    <string name="ai_neural_model_removed">Modelo eliminado. Las ediciones existentes se conservan.</string>
+    <string name="ai_remove_rife_title">¿Eliminar el modelo RIFE?</string>
+    <string name="ai_remove_upscale_title">¿Eliminar el modelo Real-ESRGAN?</string>
+    <string name="ai_remove_neural_message">Libera espacio del modelo. Descárgalo de nuevo para procesar clips. Las ediciones existentes se conservan.</string>
+    <string name="ai_rife_applied">Movimiento RIFE aplicado. Duración y audio conservados.</string>
+    <string name="ai_neural_upscale_applied">Mejora Real-ESRGAN 2x aplicada.</string>
+    <string name="ai_neural_processing_failed">No se pudo procesar el archivo. El clip original se conserva.</string>
+    <string name="ai_neural_dimensions">El clip supera el límite neuronal: RIFE hasta 720p; ampliación 2x hasta 1080p de vídeo y 16 MP de imagen.</string>
+    <string name="ai_neural_storage">No hay suficiente espacio temporal. Usa una fuente más corta; se necesita espacio para los fotogramas y la salida.</string>
+    <string name="ai_neural_frame_count">La fuente es demasiado larga. Usa una fuente más corta; el límite es de 3600 fotogramas de salida.</string>
+    <string name="ai_neural_cadence">Esta tasa no es compatible. RIFE admite fuentes de hasta 60 fps.</string>
+    <string name="ai_neural_model_invalid">Falló la verificación. Descarga el modelo de nuevo en Modelos y configuración.</string>
 </resources>

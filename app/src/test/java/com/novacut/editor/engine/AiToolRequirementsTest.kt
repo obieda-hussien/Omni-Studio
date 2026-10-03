@@ -111,7 +111,6 @@ class AiToolRequirementsTest {
     fun futureModelsDoNotAdvertiseDownloadsBeforePinsAndRuntimeWiring() {
         val plannedOnlyTools = listOf(
             "ai_style_transfer",
-            "video_upscale",
             "tap_segment"
         )
 
@@ -137,7 +136,9 @@ class AiToolRequirementsTest {
             "whisper.tiny.en.onnx",
             "selfie_segmenter.tflite",
             "lama_dilated.onnx",
-            "deep_filter_mobile_model"
+            "deep_filter_mobile_model",
+            "rife.v4.9.onnx",
+            "realesrgan.general.x4v3.onnx"
         )
 
         val runnableOrDownloadable = AiToolRequirements.Tool.entries.mapNotNull {

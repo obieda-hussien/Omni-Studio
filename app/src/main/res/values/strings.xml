@@ -550,7 +550,7 @@
     <string name="ai_tool_denoise">Denoise Audio</string>
     <string name="ai_tool_denoise_desc">Remove background noise</string>
     <string name="ai_tool_ai_upscale">AI Upscale</string>
-    <string name="ai_tool_ai_upscale_desc">Upscale video with Real-ESRGAN</string>
+    <string name="ai_tool_ai_upscale_desc">Enhance images and videos at 2x size with Real-ESRGAN</string>
     <string name="ai_tool_frame_interp_desc">Generate intermediate frames for smoother motion</string>
     <string name="ai_tool_ai_background">AI Background</string>
     <string name="ai_tool_ai_background_desc">AI green screen with RVM matting</string>
@@ -3710,4 +3710,24 @@
     <string name="ai_tool_unavailable">Coming later</string>
     <string name="ai_tool_unavailable_hint">This tool is not included in this version. Choose an available tool to continue editing.</string>
     <string name="ai_frame_interp_hdr_unsupported">Motion smoothing currently supports SDR video. Your HDR source has been kept unchanged.</string>
+    <string name="ai_tool_rife">RIFE smooth motion</string>
+    <string name="ai_tool_rife_desc">Generate intermediate frames with the RIFE neural model</string>
+    <string name="ai_rife_hint">Doubles frame rate. SDR video up to 720p / 60 fps; original duration and audio stay intact. Download RIFE in Models &amp; setup.</string>
+    <string name="ai_rife_model_title">RIFE 4.9 · 20.5 MiB</string>
+    <string name="ai_rife_model_description">Neural motion interpolation on this device. MIT license. Video processing uses temporary storage; larger sources can use Smooth motion.</string>
+    <string name="ai_upscale_model_title">Real-ESRGAN · 4.6 MiB</string>
+    <string name="ai_upscale_model_description">2x image and video detail enhancement on this device. BSD-3-Clause. Images up to 16 MP output; video up to 1080p output.</string>
+    <string name="ai_neural_model_ready">Model ready</string>
+    <string name="ai_neural_model_removed">Model removed. Existing edits stay intact.</string>
+    <string name="ai_remove_rife_title">Remove the RIFE model?</string>
+    <string name="ai_remove_upscale_title">Remove the Real-ESRGAN model?</string>
+    <string name="ai_remove_neural_message">This frees model storage. Download it again to process new clips. Existing edits stay intact.</string>
+    <string name="ai_rife_applied">RIFE smooth motion applied. Duration and audio preserved.</string>
+    <string name="ai_neural_upscale_applied">Real-ESRGAN 2x enhancement applied.</string>
+    <string name="ai_neural_processing_failed">Could not process this media. Your original clip is unchanged.</string>
+    <string name="ai_neural_dimensions">This clip exceeds the neural processing size limit. RIFE supports up to 720p; 2x upscale supports 1080p video output and 16 MP images.</string>
+    <string name="ai_neural_storage">Not enough temporary storage for this clip. Use a shorter source; processing needs space for frames and output.</string>
+    <string name="ai_neural_frame_count">This source is too long for neural processing. Use a shorter source; the limit is 3,600 output frames.</string>
+    <string name="ai_neural_cadence">This frame rate cannot use this neural tool. RIFE supports source rates up to 60 fps.</string>
+    <string name="ai_neural_model_invalid">Model verification failed. Download the model again in Models &amp; setup.</string>
 </resources>

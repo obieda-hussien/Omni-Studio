@@ -150,10 +150,21 @@ class FFmpegEngine @Inject constructor(
         fps: Int,
         outputFile: File,
         onProgress: (Float) -> Unit = {}
+    ): Boolean = encodeImageSequenceWithAudio(inputUri, framePattern, fps.toDouble(), outputFile, null, onProgress)
+
+    /** Fractional cadence and exact video duration. Short audio never truncates the rendered video. */
+    suspend fun encodeImageSequenceWithAudio(
+        inputUri: Uri,
+        framePattern: String,
+        fps: Double,
+        outputFile: File,
+        durationMs: Long?,
+        onProgress: (Float) -> Unit = {}
     ): Boolean = withContext(Dispatchers.IO) {
         val v = NativeProcessingPolicy.validateVideoUri(context, inputUri, "encodeImageSequenceWithAudio")
         if (v != null) return@withContext NativeProcessingPolicy.logAndReject(v)
-        if (framePattern.isBlank()) return@withContext false
+        if (framePattern.isBlank() || !fps.isFinite() || fps <= 0 || fps > 120 ||
+            (durationMs != null && durationMs <= 0)) return@withContext false
         outputFile.parentFile?.mkdirs()
         val sourceHasAudio = hasUsableTrack(inputUri, "audio/")
         val preferred = preferredIntermediateEncoder()
@@ -166,15 +177,17 @@ class FFmpegEngine @Inject constructor(
             outputFile.delete()
             val exitCode = executeArguments(
                 buildList {
-                    addAll(listOf("-y", "-framerate", fps.coerceIn(1, 120).toString()))
+                    addAll(listOf("-y", "-framerate", fps.toString()))
                     addAll(listOf("-i", framePattern))
                     addAll(listOf("-i", ffmpegInput(inputUri)))
                     addAll(listOf("-map", "0:v:0", "-map", "1:a:0?"))
                     addAll(listOf("-c:v", encoder.ffmpegName))
                     addAll(intermediateQualityArgs(encoder))
                     addAll(listOf("-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k"))
-                    addAll(listOf("-shortest", outputFile.absolutePath))
+                    if (durationMs != null) addAll(listOf("-t", String.format(java.util.Locale.US, "%.6f", durationMs / 1000.0)))
+                    addAll(listOf("-movflags", "+faststart", outputFile.absolutePath))
                 },
+                progressDurationMs = durationMs,
                 onProgress = onProgress
             )
             val hasVideo = exitCode == 0 && hasUsableTrack(outputFile, "video/")

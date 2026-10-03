@@ -140,7 +140,12 @@ fun BoxScope.EditorUtilityPanelHost(
         AiModelRequirementSheet(
             requirement = req,
             onDismiss = viewModel::dismissAiModelRequirement,
-            onDownload = {
+            onDownload = { requirement ->
+                when (requirement.tool) {
+                    com.novacut.editor.engine.AiToolRequirements.Tool.RIFE_INTERP -> viewModel.downloadRifeModel()
+                    com.novacut.editor.engine.AiToolRequirements.Tool.AI_UPSCALE -> viewModel.downloadUpscaleModel()
+                    else -> Unit
+                }
                 viewModel.dismissAiModelRequirement()
                 viewModel.showAiToolsPanel()
             },

@@ -116,6 +116,10 @@ fun EditorScreen(
     val segmentationProgress by viewModel.segmentationDownloadProgress.collectAsStateWithLifecycle()
     val inpaintingState by viewModel.inpaintingModelState.collectAsStateWithLifecycle()
     val inpaintingProgress by viewModel.inpaintingDownloadProgress.collectAsStateWithLifecycle()
+    val rifeState by viewModel.rifeModelState.collectAsStateWithLifecycle()
+    val rifeProgress by viewModel.rifeDownloadProgress.collectAsStateWithLifecycle()
+    val upscaleState by viewModel.upscaleModelState.collectAsStateWithLifecycle()
+    val upscaleProgress by viewModel.upscaleDownloadProgress.collectAsStateWithLifecycle()
     val networkAvailable by viewModel.networkAvailable.collectAsStateWithLifecycle()
     val scopeFrame by viewModel.scopeFrame.collectAsStateWithLifecycle()
     val showLutPicker by viewModel.showLutPicker.collectAsStateWithLifecycle()
@@ -1283,6 +1287,8 @@ fun EditorScreen(
             segmentationDownloadProgress = segmentationProgress,
             inpaintingModelState = inpaintingState,
             inpaintingDownloadProgress = inpaintingProgress,
+            rifeModelState = rifeState, rifeDownloadProgress = rifeProgress,
+            upscaleModelState = upscaleState, upscaleDownloadProgress = upscaleProgress,
             networkAvailable = networkAvailable,
         )
 
