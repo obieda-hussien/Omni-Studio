@@ -38,15 +38,15 @@ internal object CapabilityRegistryGenerated {
         CapabilityRecord(
             id = "video_upscaling",
             name = "Video Upscaling",
-            engine = "Planned: Real-ESRGAN requires model integration",
-            onDevice = "Planned",
-            status = "planned",
-            reachability = "dependency_missing",
+            engine = "Real-ESRGAN general x4v3 ONNX: tiled 2x image/video enhancement with audio preservation",
+            onDevice = "Yes (explicit 4.6 MiB model download; bounded jobs)",
+            status = "available",
+            reachability = "model_gated",
         ),
         CapabilityRecord(
             id = "frame_interpolation",
             name = "Frame Interpolation",
-            engine = "FFmpeg motion-compensated optical flow (full resolution; RIFE backend planned)",
+            engine = "FFmpeg optical flow, plus optional RIFE 4.9 neural interpolation (2x fps)",
             onDevice = "Yes (built-in; no model download)",
             status = "available",
             reachability = "reachable",
@@ -123,6 +123,14 @@ internal object CapabilityRegistryGenerated {
             status = "available",
             reachability = "reachable",
         ),
+        CapabilityRecord(
+            id = "rife_interpolation",
+            name = "RIFE Neural Motion",
+            engine = "Practical-RIFE 4.9 ONNX: same-resolution 2x cadence, preserved duration and audio",
+            onDevice = "Yes (explicit 20.5 MiB download; SDR up to 720p / 60 fps)",
+            status = "available",
+            reachability = "model_gated",
+        ),
     )
 
     val dependencies: List<PublicDependencyRecord> = listOf(
@@ -132,7 +140,7 @@ internal object CapabilityRegistryGenerated {
             version = "1.26.0",
             coordinate = "com.microsoft.onnxruntime:onnxruntime-android",
             catalogKeys = listOf("onnxruntime"),
-            purpose = "Whisper ASR and LaMa inpainting",
+            purpose = "Whisper ASR, LaMa, RIFE interpolation and Real-ESRGAN restoration",
             publicStatus = "bundled",
         ),
         PublicDependencyRecord(

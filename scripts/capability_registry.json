@@ -6,8 +6,10 @@
       "label": "ONNX Runtime",
       "version": "1.26.0",
       "coordinate": "com.microsoft.onnxruntime:onnxruntime-android",
-      "catalogKeys": ["onnxruntime"],
-      "purpose": "Whisper ASR and LaMa inpainting",
+      "catalogKeys": [
+        "onnxruntime"
+      ],
+      "purpose": "Whisper ASR, LaMa, RIFE interpolation and Real-ESRGAN restoration",
       "publicStatus": "bundled",
       "notice": {
         "name": "ONNX Runtime Android",
@@ -22,7 +24,9 @@
       "label": "MediaPipe",
       "version": "1.0.0",
       "coordinate": "com.google.mediapipe:tasks-vision",
-      "catalogKeys": ["mediapipe"],
+      "catalogKeys": [
+        "mediapipe"
+      ],
       "purpose": "Selfie segmentation and smart reframe",
       "publicStatus": "bundled",
       "notice": {
@@ -38,7 +42,9 @@
       "label": "Lottie Compose",
       "version": "6.7.1",
       "coordinate": "com.airbnb.android:lottie-compose",
-      "catalogKeys": ["lottieCompose"],
+      "catalogKeys": [
+        "lottieCompose"
+      ],
       "purpose": "Animated title templates",
       "publicStatus": "bundled",
       "notice": {
@@ -54,7 +60,9 @@
       "label": "OkHttp",
       "version": "5.5.0",
       "coordinate": "com.squareup.okhttp3:okhttp",
-      "catalogKeys": ["okhttp"],
+      "catalogKeys": [
+        "okhttp"
+      ],
       "purpose": "Model downloads and future opt-in provider calls",
       "publicStatus": "bundled",
       "notice": {
@@ -70,7 +78,9 @@
       "label": "Media3",
       "version": "1.11.0",
       "coordinate": "androidx.media3",
-      "catalogKeys": ["media3"],
+      "catalogKeys": [
+        "media3"
+      ],
       "purpose": "Transformer, ExoPlayer, effects, and muxing",
       "publicStatus": "bundled",
       "notice": {
@@ -86,7 +96,9 @@
       "label": "Coil Compose",
       "version": "3.5.0",
       "coordinate": "io.coil-kt.coil3:coil-compose",
-      "catalogKeys": ["coil"],
+      "catalogKeys": [
+        "coil"
+      ],
       "purpose": "Image and video thumbnails",
       "publicStatus": "bundled",
       "notice": {
@@ -102,7 +114,9 @@
       "label": "Hilt / Dagger",
       "version": "2.60.1",
       "coordinate": "com.google.dagger:hilt-android",
-      "catalogKeys": ["hilt"],
+      "catalogKeys": [
+        "hilt"
+      ],
       "purpose": "Dependency injection",
       "publicStatus": "bundled",
       "notice": {
@@ -118,7 +132,9 @@
       "label": "Android DeepFilterNet",
       "version": "0.0.8",
       "coordinate": "io.github.kaleyravideo:android-deepfilternet",
-      "catalogKeys": ["deepfilternet"],
+      "catalogKeys": [
+        "deepfilternet"
+      ],
       "purpose": "On-device voiceover noise reduction",
       "publicStatus": "bundled",
       "notice": {
@@ -153,7 +169,10 @@
       "label": "AndroidX Benchmark/ProfileInstaller",
       "version": "1.5.0-beta01 / 1.4.1",
       "coordinate": "androidx.benchmark:benchmark-macro-junit4 / androidx.profileinstaller:profileinstaller",
-      "catalogKeys": ["androidxBenchmark", "androidxProfileInstaller"],
+      "catalogKeys": [
+        "androidxBenchmark",
+        "androidxProfileInstaller"
+      ],
       "purpose": "Baseline profile generation and installation",
       "publicStatus": "bundled"
     },
@@ -184,7 +203,15 @@
       "onDevice": "Yes",
       "status": "available",
       "reachability": "model_gated",
-      "evidence": [{"path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt", "terms": ["Tool.AUTO_CAPTIONS", "Availability.MODEL_DOWNLOAD_REQUIRED"]}]
+      "evidence": [
+        {
+          "path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt",
+          "terms": [
+            "Tool.AUTO_CAPTIONS",
+            "Availability.MODEL_DOWNLOAD_REQUIRED"
+          ]
+        }
+      ]
     },
     {
       "id": "background_removal",
@@ -193,7 +220,15 @@
       "onDevice": "Yes",
       "status": "available",
       "reachability": "model_gated",
-      "evidence": [{"path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt", "terms": ["Tool.REMOVE_BACKGROUND", "Availability.MODEL_DOWNLOAD_REQUIRED"]}]
+      "evidence": [
+        {
+          "path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt",
+          "terms": [
+            "Tool.REMOVE_BACKGROUND",
+            "Availability.MODEL_DOWNLOAD_REQUIRED"
+          ]
+        }
+      ]
     },
     {
       "id": "ai_green_screen",
@@ -202,7 +237,15 @@
       "onDevice": "Planned",
       "status": "planned",
       "reachability": "dependency_missing",
-      "evidence": [{"path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt", "terms": ["Tool.AI_BACKGROUND", "Availability.DEPENDENCY_MISSING"]}]
+      "evidence": [
+        {
+          "path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt",
+          "terms": [
+            "Tool.AI_BACKGROUND",
+            "Availability.DEPENDENCY_MISSING"
+          ]
+        }
+      ]
     },
     {
       "id": "object_removal",
@@ -212,24 +255,60 @@
       "status": "available",
       "reachability": "model_gated",
       "evidence": [
-        {"path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt", "terms": ["Tool.OBJECT_REMOVE", "Availability.MODEL_DOWNLOAD_REQUIRED"]},
-        {"path": "app/src/main/java/com/novacut/editor/engine/InpaintingEngine.kt", "terms": ["fun inpaintFrame", "fun inpaintVideo", "encodeImageSequenceWithAudio"]},
-        {"path": "app/src/main/java/com/novacut/editor/ui/editor/AiToolsDelegate.kt", "terms": ["getSelectedMask", "inpaintingEngine.inpaintVideo", "inpaintingEngine.inpaintFrame"]}
+        {
+          "path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt",
+          "terms": [
+            "Tool.OBJECT_REMOVE",
+            "Availability.MODEL_DOWNLOAD_REQUIRED"
+          ]
+        },
+        {
+          "path": "app/src/main/java/com/novacut/editor/engine/InpaintingEngine.kt",
+          "terms": [
+            "fun inpaintFrame",
+            "fun inpaintVideo",
+            "encodeImageSequenceWithAudio"
+          ]
+        },
+        {
+          "path": "app/src/main/java/com/novacut/editor/ui/editor/AiToolsDelegate.kt",
+          "terms": [
+            "getSelectedMask",
+            "inpaintingEngine.inpaintVideo",
+            "inpaintingEngine.inpaintFrame"
+          ]
+        }
       ]
     },
     {
       "id": "video_upscaling",
       "name": "Video Upscaling",
-      "engine": "Planned: Real-ESRGAN requires model integration",
-      "onDevice": "Planned",
-      "status": "planned",
-      "reachability": "dependency_missing",
-      "evidence": [{"path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt", "terms": ["Tool.AI_UPSCALE", "Availability.DEPENDENCY_MISSING"]}]
+      "engine": "Real-ESRGAN general x4v3 ONNX: tiled 2x image/video enhancement with audio preservation",
+      "onDevice": "Yes (explicit 4.6 MiB model download; bounded jobs)",
+      "status": "available",
+      "reachability": "model_gated",
+      "evidence": [
+        {
+          "path": "app/src/main/java/com/novacut/editor/engine/UpscaleEngine.kt",
+          "terms": [
+            "fun upscaleFrame",
+            "fun upscaleVideo",
+            "NeuralMediaPolicy.tiles"
+          ]
+        },
+        {
+          "path": "app/src/main/java/com/novacut/editor/ui/editor/AiToolsDelegate.kt",
+          "terms": [
+            "upscaleEngine.upscaleVideo",
+            "upscaleEngine.upscaleFrame"
+          ]
+        }
+      ]
     },
     {
       "id": "frame_interpolation",
       "name": "Frame Interpolation",
-      "engine": "FFmpeg motion-compensated optical flow (full resolution; RIFE backend planned)",
+      "engine": "FFmpeg optical flow, plus optional RIFE 4.9 neural interpolation (2x fps)",
       "onDevice": "Yes (built-in; no model download)",
       "status": "available",
       "reachability": "reachable",
@@ -263,7 +342,15 @@
       "onDevice": "Planned",
       "status": "planned",
       "reachability": "dependency_missing",
-      "evidence": [{"path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt", "terms": ["Tool.AI_STYLE", "Availability.DEPENDENCY_MISSING"]}]
+      "evidence": [
+        {
+          "path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt",
+          "terms": [
+            "Tool.AI_STYLE",
+            "Availability.DEPENDENCY_MISSING"
+          ]
+        }
+      ]
     },
     {
       "id": "stabilization",
@@ -273,9 +360,29 @@
       "status": "available",
       "reachability": "reachable",
       "evidence": [
-        {"path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt", "terms": ["Tool.AI_STABILIZE", "modelDisplayName = \"ClearCut offline motion analysis\"", "availability = Availability.READY"]},
-        {"path": "app/src/main/java/com/novacut/editor/engine/StabilizationEngine.kt", "terms": ["class StabilizationEngine", "suspend fun analyzeMotion"]},
-        {"path": "app/src/main/java/com/novacut/editor/ui/editor/AiToolsDelegate.kt", "terms": ["StabilizationPreview", "StabilizationData", "EffectKind.STABILIZATION_LOCAL"]}
+        {
+          "path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt",
+          "terms": [
+            "Tool.AI_STABILIZE",
+            "modelDisplayName = \"ClearCut offline motion analysis\"",
+            "availability = Availability.READY"
+          ]
+        },
+        {
+          "path": "app/src/main/java/com/novacut/editor/engine/StabilizationEngine.kt",
+          "terms": [
+            "class StabilizationEngine",
+            "suspend fun analyzeMotion"
+          ]
+        },
+        {
+          "path": "app/src/main/java/com/novacut/editor/ui/editor/AiToolsDelegate.kt",
+          "terms": [
+            "StabilizationPreview",
+            "StabilizationData",
+            "EffectKind.STABILIZATION_LOCAL"
+          ]
+        }
       ]
     },
     {
@@ -285,7 +392,14 @@
       "onDevice": "Yes",
       "status": "available",
       "reachability": "reachable",
-      "evidence": [{"path": "app/src/main/java/com/novacut/editor/ui/editor/EditorViewModel.kt", "terms": ["smartReframeEngine.analyzeForReframe"]}]
+      "evidence": [
+        {
+          "path": "app/src/main/java/com/novacut/editor/ui/editor/EditorViewModel.kt",
+          "terms": [
+            "smartReframeEngine.analyzeForReframe"
+          ]
+        }
+      ]
     },
     {
       "id": "tap_to_segment",
@@ -294,7 +408,15 @@
       "onDevice": "Planned",
       "status": "planned",
       "reachability": "dependency_missing",
-      "evidence": [{"path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt", "terms": ["Tool.TAP_SEGMENT", "Availability.DEPENDENCY_MISSING"]}]
+      "evidence": [
+        {
+          "path": "app/src/main/java/com/novacut/editor/engine/AiToolRequirements.kt",
+          "terms": [
+            "Tool.TAP_SEGMENT",
+            "Availability.DEPENDENCY_MISSING"
+          ]
+        }
+      ]
     },
     {
       "id": "scene_detection",
@@ -303,7 +425,14 @@
       "onDevice": "Yes",
       "status": "available",
       "reachability": "reachable",
-      "evidence": [{"path": "app/src/main/java/com/novacut/editor/ai/AiFeatures.kt", "terms": ["suspend fun detectScenes"]}]
+      "evidence": [
+        {
+          "path": "app/src/main/java/com/novacut/editor/ai/AiFeatures.kt",
+          "terms": [
+            "suspend fun detectScenes"
+          ]
+        }
+      ]
     },
     {
       "id": "auto_color",
@@ -312,7 +441,14 @@
       "onDevice": "Yes",
       "status": "available",
       "reachability": "reachable",
-      "evidence": [{"path": "app/src/main/java/com/novacut/editor/ui/editor/AiToolsDelegate.kt", "terms": ["aiFeatures.autoColorCorrect"]}]
+      "evidence": [
+        {
+          "path": "app/src/main/java/com/novacut/editor/ui/editor/AiToolsDelegate.kt",
+          "terms": [
+            "aiFeatures.autoColorCorrect"
+          ]
+        }
+      ]
     },
     {
       "id": "hdr_encode_feature_gate",
@@ -321,7 +457,16 @@
       "onDevice": "Yes",
       "status": "available",
       "reachability": "reachable",
-      "evidence": [{"path": "app/src/main/java/com/novacut/editor/engine/EncoderCapabilityProbe.kt", "terms": ["FEATURE_HdrEditing", "FEATURE_HlgEditing", "isFeatureSupported"]}]
+      "evidence": [
+        {
+          "path": "app/src/main/java/com/novacut/editor/engine/EncoderCapabilityProbe.kt",
+          "terms": [
+            "FEATURE_HdrEditing",
+            "FEATURE_HlgEditing",
+            "isFeatureSupported"
+          ]
+        }
+      ]
     },
     {
       "id": "motion_tracking",
@@ -330,7 +475,14 @@
       "onDevice": "Yes",
       "status": "available",
       "reachability": "reachable",
-      "evidence": [{"path": "app/src/main/java/com/novacut/editor/ui/editor/TimelineEditing.kt", "terms": ["splitMotionTracking"]}]
+      "evidence": [
+        {
+          "path": "app/src/main/java/com/novacut/editor/ui/editor/TimelineEditing.kt",
+          "terms": [
+            "splitMotionTracking"
+          ]
+        }
+      ]
     },
     {
       "id": "audio_denoise",
@@ -339,7 +491,40 @@
       "onDevice": "Yes",
       "status": "available",
       "reachability": "reachable",
-      "evidence": [{"path": "app/src/main/java/com/novacut/editor/engine/NoiseReductionEngine.kt", "terms": ["class NoiseReductionEngine", "DeepFilterNet 3"]}]
+      "evidence": [
+        {
+          "path": "app/src/main/java/com/novacut/editor/engine/NoiseReductionEngine.kt",
+          "terms": [
+            "class NoiseReductionEngine",
+            "DeepFilterNet 3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rife_interpolation",
+      "name": "RIFE Neural Motion",
+      "engine": "Practical-RIFE 4.9 ONNX: same-resolution 2x cadence, preserved duration and audio",
+      "onDevice": "Yes (explicit 20.5 MiB download; SDR up to 720p / 60 fps)",
+      "status": "available",
+      "reachability": "model_gated",
+      "evidence": [
+        {
+          "path": "app/src/main/java/com/novacut/editor/engine/RifeEngine.kt",
+          "terms": [
+            "fun interpolateVideo",
+            "session.run",
+            "76e4cef9ab42fa7dd4e8f6e4aba47462051e3faa969e4bca6479784fbab0ac6f"
+          ]
+        },
+        {
+          "path": "app/src/main/java/com/novacut/editor/ui/editor/AiToolsPanel.kt",
+          "terms": [
+            "\"rife_interp\"",
+            "onDownloadRife"
+          ]
+        }
+      ]
     }
   ]
 }

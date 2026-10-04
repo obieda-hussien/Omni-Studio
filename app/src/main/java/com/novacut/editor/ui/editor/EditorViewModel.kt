@@ -670,6 +670,7 @@ class EditorViewModel @Inject constructor(
     private val loudnessEngine: LoudnessEngine,
     private val audioMasteringEngine: com.novacut.editor.engine.AudioMasteringEngine,
     private val frameInterpolationEngine: FrameInterpolationEngine,
+    private val rifeEngine: com.novacut.editor.engine.RifeEngine,
     private val inpaintingEngine: InpaintingEngine,
     private val upscaleEngine: UpscaleEngine,
     private val videoMattingEngine: VideoMattingEngine,
@@ -814,7 +815,7 @@ class EditorViewModel @Inject constructor(
 
     val aiToolsDelegate = AiToolsDelegate(
         stateFlow = _state, aiFeatures = aiFeatures, templateManager = templateManager,
-        frameInterpolationEngine = frameInterpolationEngine, inpaintingEngine = inpaintingEngine,
+        frameInterpolationEngine = frameInterpolationEngine, rifeEngine = rifeEngine, inpaintingEngine = inpaintingEngine,
         upscaleEngine = upscaleEngine, videoMattingEngine = videoMattingEngine,
         stabilizationEngine = stabilizationEngine,
         stabilizationProfileManager = stabilizationProfileManager,
@@ -920,6 +921,10 @@ class EditorViewModel @Inject constructor(
     val segmentationDownloadProgress get() = aiToolsDelegate.segmentationDownloadProgress
     val inpaintingModelState get() = aiToolsDelegate.inpaintingModelState
     val inpaintingDownloadProgress get() = aiToolsDelegate.inpaintingDownloadProgress
+    val rifeModelState get() = aiToolsDelegate.rifeModelState
+    val rifeDownloadProgress get() = aiToolsDelegate.rifeDownloadProgress
+    val upscaleModelState get() = aiToolsDelegate.upscaleModelState
+    val upscaleDownloadProgress get() = aiToolsDelegate.upscaleDownloadProgress
 
     // LUT picker state (exposed via delegate)
     val showLutPicker get() = colorGradingDelegate.showLutPicker
@@ -6610,6 +6615,10 @@ class EditorViewModel @Inject constructor(
     fun downloadSegmentationModel() = aiToolsDelegate.downloadSegmentationModel()
     fun deleteSegmentationModel() = aiToolsDelegate.deleteSegmentationModel()
     fun downloadInpaintingModel() = aiToolsDelegate.downloadInpaintingModel()
+    fun downloadRifeModel() = aiToolsDelegate.downloadRifeModel()
+    fun deleteRifeModel() = aiToolsDelegate.deleteRifeModel()
+    fun downloadUpscaleModel() = aiToolsDelegate.downloadUpscaleModel()
+    fun deleteUpscaleModel() = aiToolsDelegate.deleteUpscaleModel()
     fun deleteInpaintingModel() = aiToolsDelegate.deleteInpaintingModel()
 
     fun runAiTool(toolId: String) = aiToolsDelegate.runAiTool(toolId)

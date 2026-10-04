@@ -34,7 +34,7 @@ object OpenSourceLicenses {
                 )
             } ?: curated
         }
-        refreshedCurated + RuntimeOpenSourceLicensesGenerated.notices.filter { generated ->
+        refreshedCurated + NeuralModelNotices.notices + RuntimeOpenSourceLicensesGenerated.notices.filter { generated ->
             CapabilityRegistry.notices.none { curated -> curated.artifact == generated.artifact }
         }
     }

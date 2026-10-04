@@ -8,6 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import com.novacut.editor.R
+import com.novacut.editor.engine.NeuralModelState
 import com.novacut.editor.engine.InpaintingModelState
 import com.novacut.editor.engine.segmentation.SegmentationModelState
 import com.novacut.editor.engine.whisper.WhisperModelState
@@ -22,6 +23,10 @@ fun BoxScope.EditorAiPanelHost(
     segmentationDownloadProgress: Float,
     inpaintingModelState: InpaintingModelState,
     inpaintingDownloadProgress: Float,
+    rifeModelState: NeuralModelState,
+    rifeDownloadProgress: Float,
+    upscaleModelState: NeuralModelState,
+    upscaleDownloadProgress: Float,
     networkAvailable: Boolean,
 ) {
     val resources = LocalResources.current
@@ -73,6 +78,10 @@ fun BoxScope.EditorAiPanelHost(
             inpaintingDownloadProgress = inpaintingDownloadProgress,
             onDownloadInpainting = viewModel::downloadInpaintingModel,
             onDeleteInpainting = viewModel::deleteInpaintingModel,
+            rifeModelState = rifeModelState, rifeDownloadProgress = rifeDownloadProgress,
+            onDownloadRife = viewModel::downloadRifeModel, onDeleteRife = viewModel::deleteRifeModel,
+            upscaleModelState = upscaleModelState, upscaleDownloadProgress = upscaleDownloadProgress,
+            onDownloadUpscale = viewModel::downloadUpscaleModel, onDeleteUpscale = viewModel::deleteUpscaleModel,
             networkAvailable = networkAvailable,
         )
     }

@@ -100,8 +100,8 @@ The table below is generated-contract content and intentionally mirrors `scripts
 | **Background Removal** | MediaPipe Selfie Segmentation (~1-7MB, ~30fps) | Yes |
 | **AI Green Screen** | Planned: RobustVideoMatting requires model integration | Planned |
 | **Object Removal** | LaMa-Dilated inpainting with rectangle, ellipse, and freehand mask rendering for stills and motion clips | Yes (explicit ~174 MB model download) |
-| **Video Upscaling** | Planned: Real-ESRGAN requires model integration | Planned |
-| **Frame Interpolation** | FFmpeg motion-compensated optical flow (full resolution; RIFE backend planned) | Yes (built-in; no model download) |
+| **Video Upscaling** | Real-ESRGAN general x4v3 ONNX: tiled 2x image/video enhancement with audio preservation | Yes (explicit 4.6 MiB model download; bounded jobs) |
+| **Frame Interpolation** | FFmpeg optical flow, plus optional RIFE 4.9 neural interpolation (2x fps) | Yes (built-in; no model download) |
 | **Style Transfer** | Planned: AnimeGANv2 and Fast NST require model integration | Planned |
 | **Stabilization** | Built-in offline motion analysis with bounded translation search and shared preview/export transforms | Yes |
 | **Smart Reframe** | MediaPipe BlazeFace detection, EMA-smoothed crop trajectory, 3 strategies (stationary/pan/track) | Yes |
@@ -111,6 +111,7 @@ The table below is generated-contract content and intentionally mirrors `scripts
 | **HDR Encoder Feature Gate** | MediaCodecInfo.CodecCapabilities FEATURE_HdrEditing / FEATURE_HlgEditing | Yes |
 | **Motion Tracking** | Template matching with position keyframe generation | Yes |
 | **Audio Denoise** | DeepFilterNet 3 with spectral-gate fallback | Yes |
+| **RIFE Neural Motion** | Practical-RIFE 4.9 ONNX: same-resolution 2x cadence, preserved duration and audio | Yes (explicit 20.5 MiB download; SDR up to 720p / 60 fps) |
 <!-- capability-registry:ai-tools:end -->
 
 ## Tech Stack
@@ -138,7 +139,7 @@ The table below is generated-contract content and intentionally mirrors `scripts
 ```
 com.novacut.editor/
 ├── ai/                     # AI features (captions, scene detect, stabilize, auto-edit)
-├── engine/                 # Core engines (78 injectable singletons across 200 files)
+├── engine/                 # Core engines (80 injectable singletons across 208 files)
 │   ├── VideoEngine          # Media3 playback + export
 │   ├── AudioEngine          # Waveform extraction + PCM processing
 │   ├── AudioEffectsEngine   # DSP chain (EQ, compressor, chorus, etc.)
@@ -149,9 +150,10 @@ com.novacut.editor/
 │   ├── BeatDetectionEngine  # Spectral flux onset + BPM estimation
 │   ├── LoudnessEngine       # EBU R128 measurement + normalization
 │   ├── NoiseReductionEngine # DeepFilterNet 3 + spectral-gate fallback
-│   ├── FrameInterpolationEngine  # FFmpeg optical-flow smoothing; RIFE planned
+│   ├── FrameInterpolationEngine  # FFmpeg optical-flow smoothing
+│   ├── RifeEngine           # Neural 2x frame-rate interpolation
 │   ├── InpaintingEngine     # LaMa object removal
-│   ├── UpscaleEngine        # Real-ESRGAN video upscaling (stub)
+│   ├── UpscaleEngine        # Real-ESRGAN 2x still/video enhancement
 │   ├── VideoMattingEngine   # RVM AI green screen (stub)
 │   ├── StabilizationEngine  # Offline bounded motion analysis and shared transforms
 │   ├── StyleTransferEngine  # AnimeGAN + Fast NST (stub)
@@ -233,7 +235,7 @@ The generated open-source notice inventory covers redistributable open-source ru
 <!-- capability-registry:dependencies:begin -->
 | Dependency | Version | Purpose |
 |-----------|---------|---------|
-| ONNX Runtime | 1.26.0 | Whisper ASR and LaMa inpainting |
+| ONNX Runtime | 1.26.0 | Whisper ASR, LaMa, RIFE interpolation and Real-ESRGAN restoration |
 | MediaPipe | 1.0.0 | Selfie segmentation and smart reframe |
 | Lottie Compose | 6.7.1 | Animated title templates |
 | OkHttp | 5.5.0 | Model downloads and future opt-in provider calls |

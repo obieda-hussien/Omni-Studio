@@ -1,5 +1,6 @@
 package com.novacut.editor.ui.editor
 
+import com.novacut.editor.engine.NeuralModelState
 import com.novacut.editor.ui.theme.ClearCutAccents
 import com.novacut.editor.ui.theme.LocalClearCutColors
 import androidx.compose.foundation.BorderStroke
@@ -177,6 +178,12 @@ val aiTools = listOf(
         readinessAccent = ClearCutAccents.Peach
     ),
     AiToolConfig(
+        "rife_interp", R.string.ai_tool_rife, R.string.ai_tool_rife_desc,
+        Icons.Default.SlowMotionVideo, ClearCutAccents.Lavender,
+        readinessResId = R.string.ai_tool_status_model_gated,
+        readinessHintResId = R.string.ai_rife_hint, readinessAccent = ClearCutAccents.Peach,
+    ),
+    AiToolConfig(
         "frame_interp",
         R.string.tool_frame_interp,
         R.string.ai_tool_frame_interp_desc,
@@ -221,7 +228,9 @@ val aiTools = listOf(
 private enum class AiModelRemovalTarget {
     WHISPER,
     SEGMENTATION,
-    INPAINTING
+    INPAINTING,
+    RIFE,
+    UPSCALE
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -255,6 +264,14 @@ fun AiToolsPanel(
     inpaintingDownloadProgress: Float = 0f,
     onDownloadInpainting: () -> Unit = {},
     onDeleteInpainting: () -> Unit = {},
+    rifeModelState: NeuralModelState = NeuralModelState.NOT_DOWNLOADED,
+    rifeDownloadProgress: Float = 0f,
+    onDownloadRife: () -> Unit = {},
+    onDeleteRife: () -> Unit = {},
+    upscaleModelState: NeuralModelState = NeuralModelState.NOT_DOWNLOADED,
+    upscaleDownloadProgress: Float = 0f,
+    onDownloadUpscale: () -> Unit = {},
+    onDeleteUpscale: () -> Unit = {},
     networkAvailable: Boolean = true,
 ) {
     val semanticColors = LocalClearCutColors.current
@@ -444,6 +461,21 @@ fun AiToolsPanel(
                         }
                     )
 
+                    NeuralModelCard(
+                        name = stringResource(R.string.ai_rife_model_title),
+                        description = stringResource(R.string.ai_rife_model_description),
+                        state = rifeModelState, progress = rifeDownloadProgress,
+                        networkAvailable = networkAvailable, onDownload = onDownloadRife,
+                        onRemove = { pendingModelRemoval = AiModelRemovalTarget.RIFE },
+                    )
+                    NeuralModelCard(
+                        name = stringResource(R.string.ai_upscale_model_title),
+                        description = stringResource(R.string.ai_upscale_model_description),
+                        state = upscaleModelState, progress = upscaleDownloadProgress,
+                        networkAvailable = networkAvailable, onDownload = onDownloadUpscale,
+                        onRemove = { pendingModelRemoval = AiModelRemovalTarget.UPSCALE },
+                    )
+
                     PremiumPanelCard(accent = ClearCutAccents.Sapphire) {
                         Text(
                             text = stringResource(R.string.ai_stabilization_profiles_title),
@@ -490,6 +522,8 @@ fun AiToolsPanel(
                     AiModelRemovalTarget.WHISPER -> onDeleteWhisper()
                     AiModelRemovalTarget.SEGMENTATION -> onDeleteSegmentation()
                     AiModelRemovalTarget.INPAINTING -> onDeleteInpainting()
+                    AiModelRemovalTarget.RIFE -> onDeleteRife()
+                    AiModelRemovalTarget.UPSCALE -> onDeleteUpscale()
                 }
                 pendingModelRemoval = null
             }
@@ -674,11 +708,14 @@ private fun AiModelRemovalConfirmDialog(
         AiModelRemovalTarget.WHISPER -> stringResource(R.string.ai_remove_whisper_title)
         AiModelRemovalTarget.SEGMENTATION -> stringResource(R.string.ai_remove_segmentation_title)
         AiModelRemovalTarget.INPAINTING -> stringResource(R.string.ai_remove_inpainting_title)
+        AiModelRemovalTarget.RIFE -> stringResource(R.string.ai_remove_rife_title)
+        AiModelRemovalTarget.UPSCALE -> stringResource(R.string.ai_remove_upscale_title)
     }
     val body = when (target) {
         AiModelRemovalTarget.WHISPER -> stringResource(R.string.ai_remove_whisper_message)
         AiModelRemovalTarget.SEGMENTATION -> stringResource(R.string.ai_remove_segmentation_message)
         AiModelRemovalTarget.INPAINTING -> stringResource(R.string.ai_remove_inpainting_message)
+        AiModelRemovalTarget.RIFE, AiModelRemovalTarget.UPSCALE -> stringResource(R.string.ai_remove_neural_message)
     }
 
     AlertDialog(
@@ -888,4 +925,29 @@ private fun inpaintingAccent(state: InpaintingModelState): Color {
         InpaintingModelState.ERROR -> ClearCutAccents.Red
         InpaintingModelState.NOT_DOWNLOADED -> semanticColors.surfaceHigh
     }
+}
+
+@Composable
+private fun NeuralModelCard(
+    name: String, description: String, state: NeuralModelState, progress: Float,
+    networkAvailable: Boolean, onDownload: () -> Unit, onRemove: () -> Unit,
+) {
+    val ready = state == NeuralModelState.READY
+    val downloading = state == NeuralModelState.DOWNLOADING
+    ModelStatusCard(
+        accent = if (ready) ClearCutAccents.Green else ClearCutAccents.Lavender,
+        icon = Icons.Default.AutoAwesome, title = name,
+        status = stringResource(when (state) {
+            NeuralModelState.READY -> R.string.ai_neural_model_ready
+            NeuralModelState.DOWNLOADING -> R.string.ai_downloading_model
+            NeuralModelState.ERROR -> R.string.ai_download_failed
+            NeuralModelState.NOT_DOWNLOADED -> R.string.ai_tool_status_model_gated
+        }),
+        description = description, progress = if (downloading) progress else null,
+        primaryActionLabel = if (!ready && !downloading) stringResource(R.string.ai_tools_download) else null,
+        onPrimaryAction = if (!ready && !downloading) onDownload else null,
+        networkAvailable = networkAvailable,
+        secondaryActionLabel = if (ready) stringResource(R.string.ai_model_remove_action) else null,
+        onSecondaryAction = if (ready) onRemove else null,
+    )
 }

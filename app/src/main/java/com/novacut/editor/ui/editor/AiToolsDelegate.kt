@@ -33,6 +33,7 @@ class AiToolsDelegate(
     private val aiFeatures: AiFeatures,
     private val templateManager: TemplateManager,
     private val frameInterpolationEngine: FrameInterpolationEngine,
+    private val rifeEngine: RifeEngine,
     private val inpaintingEngine: InpaintingEngine,
     private val upscaleEngine: UpscaleEngine,
     private val videoMattingEngine: VideoMattingEngine,
@@ -74,6 +75,7 @@ class AiToolsDelegate(
         "track_motion",
         "ai_stabilize",
         "frame_interp",
+        "rife_interp",
     )
 
     private val visualRequiredTools = setOf(
@@ -88,6 +90,7 @@ class AiToolsDelegate(
         "smart_reframe",
         "upscale",
         "frame_interp",
+        "rife_interp",
         "object_remove",
         "video_upscale",
         "ai_background",
@@ -98,6 +101,7 @@ class AiToolsDelegate(
 
     private val strictRequirementTools = setOf(
         "frame_interp",
+        "rife_interp",
         "object_remove",
         "video_upscale",
         "ai_background",
@@ -111,6 +115,43 @@ class AiToolsDelegate(
     val segmentationDownloadProgress get() = aiFeatures.segmentationEngine.downloadProgress
     val inpaintingModelState get() = inpaintingEngine.modelState
     val inpaintingDownloadProgress get() = inpaintingEngine.downloadProgress
+    val rifeModelState get() = rifeEngine.modelState
+    val rifeDownloadProgress get() = rifeEngine.downloadProgress
+    val upscaleModelState get() = upscaleEngine.modelState
+    val upscaleDownloadProgress get() = upscaleEngine.downloadProgress
+
+    fun downloadRifeModel() = downloadNeuralModel { rifeEngine.downloadModel(it) }
+    fun downloadUpscaleModel() = downloadNeuralModel { upscaleEngine.downloadModel(it) }
+    fun deleteRifeModel() = deleteNeuralModel { rifeEngine.deleteModel() }
+    fun deleteUpscaleModel() = deleteNeuralModel { upscaleEngine.deleteModel() }
+
+    private fun downloadNeuralModel(download: suspend (Boolean) -> Boolean) {
+        scope.launch {
+            try {
+                showToast(text(R.string.ai_downloading_model))
+                val success = download(settingsRepo.settings.first().aiModelWifiOnly)
+                showToast(text(if (success) R.string.ai_neural_model_ready else R.string.ai_model_download_failed_toast))
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: ModelDownloadManager.OfflineNetworkException) {
+                showToast(text(R.string.settings_model_offline))
+            } catch (_: ModelDownloadManager.MeteredNetworkException) {
+                showToast(text(R.string.settings_model_wifi_only_feedback))
+            } catch (_: Exception) {
+                showToast(text(R.string.ai_model_download_failed_toast))
+            }
+        }
+    }
+
+    private fun deleteNeuralModel(delete: suspend () -> Unit) {
+        scope.launch {
+            try {
+                delete()
+                showToast(text(R.string.ai_neural_model_removed))
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled
+            } catch (_: Exception) { showToast(text(R.string.ai_model_remove_failed_toast)) }
+        }
+    }
 
     fun downloadWhisperModel() {
         scope.launch {
@@ -353,6 +394,7 @@ class AiToolsDelegate(
                     "smart_reframe" -> runSmartReframe(currentClip)
                     "upscale" -> runUpscale(currentClip)
                     "frame_interp" -> applyFrameInterpolation(currentClip)
+                    "rife_interp" -> applyNeuralMedia(currentClip, true)
                     "object_remove" -> applyObjectRemoval(currentClip)
                     "video_upscale" -> applyVideoUpscale(currentClip)
                     "ai_background" -> applyAiBackground(currentClip)
@@ -397,7 +439,7 @@ class AiToolsDelegate(
 
     private fun getToolCompatibilityMessage(toolId: String, clip: Clip): String? {
         return when {
-            toolId == "frame_interp" && clip.sourceColorMetadata.hasHdr -> text(R.string.ai_frame_interp_hdr_unsupported)
+            toolId in setOf("frame_interp", "rife_interp", "video_upscale") && clip.sourceColorMetadata.hasHdr -> text(R.string.ai_frame_interp_hdr_unsupported)
             toolId in audioRequiredTools && !videoEngine.hasAudioTrack(clip.sourceUri) -> {
                 if (toolId == "auto_captions") {
                     text(R.string.ai_auto_captions_audio_required_toast)
@@ -936,6 +978,7 @@ class AiToolsDelegate(
     private fun resolveAiModelRequirement(toolId: String): AiToolRequirements.ToolRequirement? {
         val requirement = AiToolRequirements.requirementFor(toolId) ?: return null
         val availability = when (toolId) {
+            "rife_interp" -> if (rifeEngine.isModelReady()) AiToolRequirements.Availability.READY else requirement.availability
             "frame_interp" -> if (frameInterpolationEngine.isAvailable()) {
                 AiToolRequirements.Availability.READY
             } else {
@@ -1164,7 +1207,68 @@ class AiToolsDelegate(
     }
 
     private suspend fun applyVideoUpscale(clip: Clip) {
-        showAiRequirementPrompt(toolId = "video_upscale")
+        applyNeuralMedia(clip, false)
+    }
+
+    private suspend fun applyNeuralMedia(clip: Clip, rife: Boolean) {
+        if (if (rife) !rifeEngine.isModelReady() else !upscaleEngine.isModelReady()) {
+            showAiRequirementPrompt(if (rife) "rife_interp" else "video_upscale")
+            return
+        }
+        val motion = videoEngine.isMotionVideo(clip.sourceUri)
+        val output = withContext(Dispatchers.IO) {
+            File.createTempFile("omni-neural-", if (motion) ".mp4" else ".png", managedMediaDir(appContext).also { it.mkdirs() })
+        }
+        var retained = false
+        val processingJob = kotlinx.coroutines.currentCoroutineContext()[Job]
+        val progress: (Float) -> Unit = { value ->
+            if (aiJob === processingJob) stateFlow.update { it.copyAi { ai -> ai.copy(processingProgress = value) } }
+        }
+        try {
+            val success = if (rife) rifeEngine.interpolateVideo(clip.sourceUri, output, progress)
+                else if (motion) upscaleEngine.upscaleVideo(clip.sourceUri, output, progress)
+                else withContext(Dispatchers.IO) {
+                    val bitmap = decodeNeuralImage(appContext, clip.sourceUri)
+                    try {
+                        val enlarged = upscaleEngine.upscaleFrame(bitmap, progress)
+                        try { output.outputStream().use { enlarged.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) } }
+                        finally { enlarged.recycle() }
+                    } finally { bitmap.recycle() }
+                }
+            if (!success || output.length() <= 0) {
+                showToast(text(R.string.ai_neural_processing_failed))
+                return
+            }
+            val location = stateFlow.value.tracks.findClipLocation(clip.id)
+            if (location == null || location.clip != clip || location.track.isLocked) {
+                showToast(text(R.string.ai_frame_interp_clip_changed))
+                return
+            }
+            saveUndoState(if (rife) "RIFE smooth motion" else "Real-ESRGAN 2x")
+            stateFlow.update { state -> state.copy(tracks = state.tracks.map { track ->
+                track.copy(clips = track.clips.map { c -> if (c.id == clip.id)
+                    c.copy(sourceUri = Uri.fromFile(output), proxyUri = null, isStillImage = !motion, sourceColorMetadata = SourceColorMetadata()) else c })
+            }) }
+            retained = true
+            rebuildPlayerTimeline()
+            saveProject()
+            recordAiUsageForClip(clip,
+                if (rife) AiUsageLedger.EffectKind.FRAME_INTERPOLATION_LOCAL else AiUsageLedger.EffectKind.UPSCALING_LOCAL,
+                if (rife) "RIFE 4.9 (ONNX)" else "Real-ESRGAN general x4v3 (2x output)")
+            showToast(text(if (rife) R.string.ai_rife_applied else R.string.ai_neural_upscale_applied))
+        } catch (failure: NeuralMediaException) {
+            showToast(text(when (failure.reason) {
+                NeuralMediaException.Reason.DIMENSIONS -> R.string.ai_neural_dimensions
+                NeuralMediaException.Reason.STORAGE -> R.string.ai_neural_storage
+                NeuralMediaException.Reason.FRAME_COUNT -> R.string.ai_neural_frame_count
+                NeuralMediaException.Reason.CADENCE -> R.string.ai_neural_cadence
+                NeuralMediaException.Reason.MODEL -> R.string.ai_neural_model_invalid
+                NeuralMediaException.Reason.HDR -> R.string.ai_frame_interp_hdr_unsupported
+                NeuralMediaException.Reason.MEMORY -> R.string.ai_neural_memory
+            }))
+        } finally {
+            if (!retained) withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) { output.delete() }
+        }
     }
 
     private suspend fun applyAiBackground(clip: Clip) {

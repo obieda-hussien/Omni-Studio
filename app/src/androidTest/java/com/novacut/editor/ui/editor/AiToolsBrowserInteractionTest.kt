@@ -58,7 +58,7 @@ class AiToolsBrowserInteractionTest {
         render(network = false, onDownload = { downloads++ })
         compose.onNodeWithText(text(R.string.ai_tools_tab_models)).performClick()
         val downloadButtons = compose.onAllNodesWithText(text(R.string.ai_tools_download)).fetchSemanticsNodes()
-        assertEquals(3, downloadButtons.size)
+        assertEquals(5, downloadButtons.size)
         downloadButtons.indices.forEach { index ->
             compose.onAllNodesWithText(text(R.string.ai_tools_download))[index].assertIsNotEnabled()
         }

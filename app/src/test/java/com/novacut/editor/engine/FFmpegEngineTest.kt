@@ -6,6 +6,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FFmpegEngineTest {
+    @Test fun legacyImageSequenceStopsAtShortestStream() {
+        assertEquals(listOf("-shortest"), FFmpegEngine.imageSequenceEndArgs(null))
+    }
+
+    @Test fun neuralImageSequenceKeepsExplicitDurationEvenWithShortAudio() {
+        assertEquals(listOf("-t", "2.001000"), FFmpegEngine.imageSequenceEndArgs(2001))
+    }
 
     @Test
     fun subtitleFilterEscapesAssPathAndProvidesAndroidFonts() {

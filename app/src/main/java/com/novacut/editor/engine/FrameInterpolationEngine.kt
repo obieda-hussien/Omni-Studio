@@ -11,7 +11,7 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Built-in motion-compensated smoothing. Neural RIFE remains a future backend. */
+/** Built-in motion-compensated smoothing. Optional neural processing is handled by [RifeEngine]. */
 @Singleton
 class FrameInterpolationEngine @Inject constructor(
     @ApplicationContext private val context: Context,
